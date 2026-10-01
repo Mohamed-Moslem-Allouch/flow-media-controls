@@ -67,7 +67,9 @@
           savedIsMuted = changes.savedIsMuted.newValue;
         }
         for (const [video, inst] of scrubbers.entries()) {
-          inst.applySavedVolume();
+          if (!inst.isVolDragging) {
+            inst.applySavedVolume();
+          }
         }
       }
     });
@@ -347,6 +349,7 @@
       this.volBtnEl = null;
       this.isDragging = false;
       this.isVolDragging = false;
+      this._lastUserVolInteraction = 0;
       this.animFrameId = null;
 
       this.onTimeUpdate = this.onTimeUpdate.bind(this);
@@ -528,22 +531,11 @@
 
         // Hover intent timer: Keeps capsule open when cursor travels from speaker button to slider
         this.volWrapEl.addEventListener('mouseenter', () => {
-          if (this._volCloseTimer) {
-            clearTimeout(this._volCloseTimer);
-            this._volCloseTimer = null;
-          }
-          this.volWrapEl.classList.add('vsc-volume-active');
+          this.openVolPopup();
         });
 
         this.volWrapEl.addEventListener('mouseleave', () => {
-          if (this._volCloseTimer) {
-            clearTimeout(this._volCloseTimer);
-          }
-          this._volCloseTimer = setTimeout(() => {
-            if (!this.isVolDragging && this.volWrapEl) {
-              this.volWrapEl.classList.remove('vsc-volume-active');
-            }
-          }, 350);
+          this.closeVolPopup(350);
         });
 
         this.volWrapEl.addEventListener(
@@ -568,38 +560,58 @@
       }
     }
 
+    openVolPopup() {
+      if (this._volCloseTimer) {
+        clearTimeout(this._volCloseTimer);
+        this._volCloseTimer = null;
+      }
+      if (this.volWrapEl) {
+        this.volWrapEl.classList.add('vsc-volume-active');
+      }
+    }
+
+    closeVolPopup(delay = 350) {
+      if (this.isVolDragging) return;
+      if (this._volCloseTimer) {
+        clearTimeout(this._volCloseTimer);
+      }
+      this._volCloseTimer = setTimeout(() => {
+        if (!this.isVolDragging && this.volWrapEl) {
+          this.volWrapEl.classList.remove('vsc-volume-active');
+        }
+      }, delay);
+    }
+
     /**
      * Volume dragging handlers (invoked via window capture handlers)
      */
     startVolDragging(clientY) {
       this.isVolDragging = true;
+      this._lastUserVolInteraction = Date.now();
+      if (this.overlayEl) {
+        this.overlayEl.classList.add('vsc-vol-dragging');
+      }
       if (this.volWrapEl) {
-        if (this._volCloseTimer) {
-          clearTimeout(this._volCloseTimer);
-          this._volCloseTimer = null;
-        }
-        this.volWrapEl.classList.add('vsc-volume-active');
+        this.openVolPopup();
+        this.volWrapEl.classList.add('vsc-vol-dragging');
       }
       this.setVolumeFromClientY(clientY);
     }
 
     stopVolDragging(upEvt) {
       this.isVolDragging = false;
+      this._lastUserVolInteraction = Date.now();
+      if (this.overlayEl) {
+        this.overlayEl.classList.remove('vsc-vol-dragging');
+      }
+      if (this.volWrapEl) {
+        this.volWrapEl.classList.remove('vsc-vol-dragging');
+      }
       this.updateVolumeUI();
       if (this.volWrapEl && upEvt && typeof upEvt.clientX === 'number') {
-        const rect = this.volWrapEl.getBoundingClientRect();
-        const pRect = this.volPopupEl ? this.volPopupEl.getBoundingClientRect() : rect;
-        const left = Math.min(rect.left, pRect.left);
-        const right = Math.max(rect.right, pRect.right);
-        const top = Math.min(rect.top, pRect.top);
-        const bottom = Math.max(rect.bottom, pRect.bottom);
-        const inWrap =
-          upEvt.clientX >= left &&
-          upEvt.clientX <= right &&
-          upEvt.clientY >= top &&
-          upEvt.clientY <= bottom;
+        const inWrap = !!findVolBtnAtPoint(upEvt.clientX, upEvt.clientY) || !!findVolPopupAtPoint(upEvt.clientX, upEvt.clientY);
         if (!inWrap) {
-          this.volWrapEl.classList.remove('vsc-volume-active');
+          this.closeVolPopup(300);
         }
       }
     }
@@ -789,13 +801,6 @@
     updateProgress() {
       if (!this.video || !this.progressEl || this.isDragging) return;
 
-      // Ensure scrubber stays as the very front child even if Instagram dynamically appends overlays
-      if (this.containerEl && this.overlayEl && this.containerEl.lastElementChild !== this.overlayEl) {
-        try {
-          this.containerEl.appendChild(this.overlayEl);
-        } catch (e) {}
-      }
-
       const current = this.video.currentTime || 0;
       const duration = getVideoDuration(this.video);
 
@@ -804,7 +809,6 @@
         if (this.thumbEl) this.thumbEl.style.setProperty('left', '0%', 'important');
         if (this.timeDisplayEl) {
           this.timeDisplayEl.textContent = '0:00 / 0:00';
-          this.updateTimeDisplay();
         }
         return;
       }
@@ -814,7 +818,6 @@
       if (this.thumbEl) this.thumbEl.style.setProperty('left', `${percent}%`, 'important');
       if (this.timeDisplayEl) {
         this.timeDisplayEl.textContent = `${formatTime(current)} / ${formatTime(duration)}`;
-        this.updateTimeDisplay();
       }
     }
 
@@ -853,7 +856,7 @@
     }
 
     applySavedVolume(forceUnmute = false) {
-      if (!this.video) return;
+      if (!this.video || this.isVolDragging) return;
       if (!this.volWrapEl && !this.context.isFacebook) return;
 
       try {
@@ -906,9 +909,15 @@
 
       if (this.isVolDragging) return;
 
+      const now = Date.now();
+      if (this._lastUserVolInteraction && now - this._lastUserVolInteraction < 800) {
+        this.updateVolumeUI();
+        return;
+      }
+
       // On Facebook stories:
       // Facebook's story player resets video.muted = true or resets volume when advancing to a new story card.
-      // If the user did NOT explicitly mute, we MUST NOT let Facebook reset the volume or mute the audio!
+      // If the user did NOT explicitly mute and didn't just adjust volume, restore saved level:
       if (this.context.isFacebook && (this.context.isStory || isStoryVideo(this.video))) {
         if (!savedIsMuted && (this.video.muted || Math.abs(this.video.volume - savedAudioVolume) > 0.05)) {
           this.applySavedVolume(true);
@@ -921,6 +930,7 @@
 
     setVolumeFromClientY(clientY) {
       if (!this.video) return;
+      this._lastUserVolInteraction = Date.now();
       let ratio = 0.8;
       if (this.volTrackEl) {
         const rect = this.volTrackEl.getBoundingClientRect();
@@ -952,6 +962,7 @@
       const now = Date.now();
       if (this._lastMuteToggle && now - this._lastMuteToggle < 150) return;
       this._lastMuteToggle = now;
+      this._lastUserVolInteraction = now;
 
       const willMute = !this.video.muted && this.video.volume > 0;
       this._internalVolumeChange = true;
@@ -972,6 +983,7 @@
 
     handleVolumeWheel(e) {
       if (!this.video) return;
+      this._lastUserVolInteraction = Date.now();
       const current = this.video.muted ? 0 : this.video.volume;
       const step = e.deltaY < 0 ? 0.05 : -0.05;
       const newVol = Math.max(0, Math.min(1, Math.round((current + step) * 100) / 100));
@@ -987,7 +999,9 @@
       } catch (err) {}
 
       saveGlobalVolume(newVol, newVol === 0);
+      this.openVolPopup();
       this.updateVolumeUI();
+      this.closeVolPopup(1000);
     }
 
     destroy() {
@@ -1082,24 +1096,63 @@
     return null;
   }
 
+  function findVolBtnAtPoint(clientX, clientY) {
+    if (typeof clientX !== 'number' || typeof clientY !== 'number') return null;
+
+    for (const [video, inst] of scrubbers.entries()) {
+      if (!video.isConnected || video.offsetWidth === 0 || video.offsetHeight === 0) continue;
+      if (!inst.overlayEl || !inst.overlayEl.isConnected || !inst.volBtnEl) continue;
+
+      const rect = inst.volBtnEl.getBoundingClientRect();
+      if (rect.width <= 0 || rect.height <= 0) continue;
+
+      // Hit area around the volume speaker button (+8px padding for easy touch/click)
+      const top = rect.top - 8;
+      const bottom = rect.bottom + 8;
+      const left = rect.left - 8;
+      const right = rect.right + 8;
+
+      if (clientX >= left && clientX <= right && clientY >= top && clientY <= bottom) {
+        return inst;
+      }
+    }
+    return null;
+  }
+
+  function findVolPopupAtPoint(clientX, clientY) {
+    if (typeof clientX !== 'number' || typeof clientY !== 'number') return null;
+
+    for (const [video, inst] of scrubbers.entries()) {
+      if (!video.isConnected || video.offsetWidth === 0 || video.offsetHeight === 0) continue;
+      if (!inst.overlayEl || !inst.overlayEl.isConnected || !inst.volWrapEl) continue;
+
+      const targetEl = (inst.volWrapEl.classList.contains('vsc-volume-active') || inst.isVolDragging) && inst.volPopupEl
+        ? inst.volPopupEl
+        : inst.volWrapEl;
+      if (!targetEl) continue;
+
+      const rect = targetEl.getBoundingClientRect();
+      if (rect.width <= 0 || rect.height <= 0) continue;
+
+      // Hit area around vertical slider popup (+10px padding)
+      const top = rect.top - 10;
+      const bottom = rect.bottom + 10;
+      const left = rect.left - 10;
+      const right = rect.right + 10;
+
+      if (clientX >= left && clientX <= right && clientY >= top && clientY <= bottom) {
+        return inst;
+      }
+    }
+    return null;
+  }
+
   // --------------------------------------------------------------------------
   // Global Window-Level Capture Event Handlers (100% Unblockable Interactions)
   // --------------------------------------------------------------------------
 
   function handleCaptureDown(e) {
     if (e.button && e.button !== 0) return;
-
-    // NEVER intercept Stories button or Stories tray interactions on feed/header
-    // (Only apply this check if the click is NOT on our extension controls)
-    if (!e.target?.closest?.('.vsc-invideo-container')) {
-      if (
-        e.target?.closest?.(
-          'a[href*="/stories/"], [aria-label*="story" i], [aria-label*="stories" i], [data-testid*="story" i], section[aria-label*="Stories" i], div[role="menu"], header, .vsc-fb-volume-capsule'
-        )
-      ) {
-        return;
-      }
-    }
 
     let clientX = e.clientX;
     let clientY = e.clientY;
@@ -1108,51 +1161,68 @@
       clientY = e.touches[0].clientY;
     }
 
-    // Direct hit or coordinate hit on Play/Pause button
-    const playBtnHit = e.target?.closest?.('.vsc-invideo-play-btn') || findPlayBtnAtPoint(clientX, clientY);
+    const directOverlay = e.target?.closest?.('.vsc-invideo-container');
+
+    // 1. Direct hit or coordinate hit on Play/Pause button
+    const playBtnHit = e.target?.closest?.('.vsc-invideo-play-btn') ? directOverlay?._vscInstance : findPlayBtnAtPoint(clientX, clientY);
     if (playBtnHit) {
+      e.preventDefault();
       e.stopPropagation();
+      e.stopImmediatePropagation();
+      playBtnHit.togglePlay();
       return;
     }
 
-    // Direct hit on Volume mute/unmute button (click handled separately)
-    const volBtnHit = e.target?.closest?.('.vsc-invideo-volume-btn');
-    if (volBtnHit) {
-      e.stopPropagation();
-      return;
-    }
-
-    // Direct hit on Volume slider / popup / track (Initiate unblockable volume dragging)
-    const volSliderHit = e.target?.closest?.(
+    // 2. Direct hit or coordinate hit on Volume slider popup / track (Initiate unblockable volume dragging)
+    const volSliderTarget = e.target?.closest?.(
       '.vsc-invideo-volume-wrap, .vsc-invideo-volume-popup, .vsc-invideo-volume-slider, .vsc-invideo-volume-track, .vsc-invideo-volume-thumb, .vsc-invideo-volume-fill'
     );
+    const volSliderHit = volSliderTarget ? volSliderTarget.closest('.vsc-invideo-container')?._vscInstance : findVolPopupAtPoint(clientX, clientY);
     if (volSliderHit) {
-      const inst = volSliderHit.closest('.vsc-invideo-container')?._vscInstance;
-      if (inst) {
-        e.preventDefault();
-        e.stopPropagation();
-        e.stopImmediatePropagation();
-        activeVolDraggingInstance = inst;
-        inst.startVolDragging(clientY);
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+      activeVolDraggingInstance = volSliderHit;
+      volSliderHit.startVolDragging(clientY);
+      return;
+    }
+
+    // 3. Direct hit or coordinate hit on Volume speaker button
+    const volBtnHit = e.target?.closest?.('.vsc-invideo-volume-btn') ? directOverlay?._vscInstance : findVolBtnAtPoint(clientX, clientY);
+    if (volBtnHit) {
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+      volBtnHit.openVolPopup();
+      volBtnHit.toggleMute();
+      return;
+    }
+
+    // 4. Scrubber timeline hit
+    const inst = directOverlay?._vscInstance || findScrubberAtPoint(clientX, clientY);
+    if (inst) {
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+
+      activeDraggingInstance = inst;
+      wasDraggingJustNow = true;
+      clearTimeout(dragResetTimer);
+
+      inst.startDragging(clientX);
+      return;
+    }
+
+    // NEVER intercept Stories button or Stories tray interactions on feed/header
+    if (!directOverlay) {
+      if (
+        e.target?.closest?.(
+          'a[href*="/stories/"], section[aria-label*="Stories" i], div[role="menu"], header, .vsc-fb-volume-capsule'
+        )
+      ) {
         return;
       }
     }
-
-    const directOverlay = e.target?.closest?.('.vsc-invideo-container');
-    const inst = directOverlay?._vscInstance || findScrubberAtPoint(clientX, clientY);
-    if (!inst) return;
-
-    // DIRECT HIT ON SCRUBBER!
-    // Prevent Instagram/Facebook from receiving this event completely
-    e.preventDefault();
-    e.stopPropagation();
-    e.stopImmediatePropagation();
-
-    activeDraggingInstance = inst;
-    wasDraggingJustNow = true;
-    clearTimeout(dragResetTimer);
-
-    inst.startDragging(clientX);
   }
 
   function handleCaptureMove(e) {
@@ -1179,9 +1249,28 @@
       return;
     }
 
-    // Hover timestamp bubble tracking
+    // Hover volume detection (coordinates-based so transparent link overlays can't block hover)
     if (typeof clientX === 'number' && typeof clientY === 'number') {
-      const isButton = e.target?.closest?.('.vsc-invideo-play-btn, .vsc-invideo-volume-wrap, .vsc-invideo-volume-popup, .vsc-invideo-volume-btn');
+      const volHoverInst = findVolBtnAtPoint(clientX, clientY) || findVolPopupAtPoint(clientX, clientY);
+      if (volHoverInst) {
+        volHoverInst.openVolPopup();
+        volHoverInst.hideHover();
+        return;
+      } else {
+        for (const [vid, scrubber] of scrubbers.entries()) {
+          if (scrubber.volWrapEl?.classList.contains('vsc-volume-active') && !scrubber.isVolDragging) {
+            scrubber.closeVolPopup(300);
+          }
+        }
+      }
+
+      // Hover timestamp bubble tracking
+      const isButton =
+        e.target?.closest?.('.vsc-invideo-play-btn, .vsc-invideo-volume-wrap, .vsc-invideo-volume-popup, .vsc-invideo-volume-btn') ||
+        findPlayBtnAtPoint(clientX, clientY) ||
+        findVolBtnAtPoint(clientX, clientY) ||
+        findVolPopupAtPoint(clientX, clientY);
+
       if (isButton) {
         for (const [vid, scrubber] of scrubbers.entries()) {
           scrubber.hideHover();
@@ -1249,58 +1338,66 @@
     window.addEventListener(evt, handleCaptureUp, { capture: true, passive: false });
   });
 
-  // Block clicks on the scrubber area so Instagram never sees or navigates on a click
+  // Block clicks on any extension control area so underlying links (like Instagram profile) never navigate
   window.addEventListener(
     'click',
     (e) => {
-      // NEVER intercept Stories button or Stories tray clicks
-      if (!e.target?.closest?.('.vsc-invideo-container')) {
-        if (
-          e.target?.closest?.(
-            'a[href*="/stories/"], [aria-label*="story" i], [aria-label*="stories" i], [data-testid*="story" i], section[aria-label*="Stories" i], div[role="menu"], header, .vsc-fb-volume-capsule'
-          )
-        ) {
-          return;
-        }
+      let clientX = e.clientX;
+      let clientY = e.clientY;
+      if (clientX === undefined && e.touches && e.touches.length > 0) {
+        clientX = e.touches[0].clientX;
+        clientY = e.touches[0].clientY;
       }
 
-      // Check if click is on Volume button
+      const directOverlay = e.target?.closest?.('.vsc-invideo-container');
+
+      // Check if click is on or over Volume button (element target OR screen coordinates)
       const volBtn = e.target?.closest?.('.vsc-invideo-volume-btn');
-      if (volBtn) {
-        e.preventDefault();
-        e.stopPropagation();
-        e.stopImmediatePropagation();
-        const inst = volBtn.closest('.vsc-invideo-container')?._vscInstance;
-        if (inst) inst.toggleMute();
-        return;
-      }
-
-      // Check if click is inside Volume slider popup/wrap
-      if (e.target?.closest?.('.vsc-invideo-volume-wrap, .vsc-invideo-volume-popup')) {
+      const volBtnInst = (volBtn ? volBtn.closest('.vsc-invideo-container')?._vscInstance : null) || findVolBtnAtPoint(clientX, clientY);
+      if (volBtnInst) {
         e.preventDefault();
         e.stopPropagation();
         e.stopImmediatePropagation();
         return;
       }
 
-      // Check if click is on Play/Pause button (by target element OR by screen coordinates)
+      // Check if click is inside Volume slider popup/wrap (element target OR screen coordinates)
+      const volPopup = e.target?.closest?.('.vsc-invideo-volume-wrap, .vsc-invideo-volume-popup');
+      const volPopupInst = (volPopup ? volPopup.closest('.vsc-invideo-container')?._vscInstance : null) || findVolPopupAtPoint(clientX, clientY);
+      if (volPopupInst) {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        return;
+      }
+
+      // Check if click is on Play/Pause button (element target OR screen coordinates)
       const playBtn = e.target?.closest?.('.vsc-invideo-play-btn');
-      const instByCoord = findPlayBtnAtPoint(e.clientX, e.clientY);
-      const playInst = (playBtn ? playBtn.closest('.vsc-invideo-container')?._vscInstance : null) || instByCoord;
-
+      const playInst = (playBtn ? playBtn.closest('.vsc-invideo-container')?._vscInstance : null) || findPlayBtnAtPoint(clientX, clientY);
       if (playInst) {
         e.preventDefault();
         e.stopPropagation();
         e.stopImmediatePropagation();
-        playInst.togglePlay();
         return;
       }
 
-      const directOverlay = e.target?.closest?.('.vsc-invideo-container');
-      if (wasDraggingJustNow || directOverlay || findScrubberAtPoint(e.clientX, e.clientY)) {
+      // Check if click is on Scrubber timeline
+      if (wasDraggingJustNow || directOverlay || findScrubberAtPoint(clientX, clientY)) {
         e.preventDefault();
         e.stopPropagation();
         e.stopImmediatePropagation();
+        return;
+      }
+
+      // NEVER intercept Stories button or Stories tray clicks
+      if (!directOverlay) {
+        if (
+          e.target?.closest?.(
+            'a[href*="/stories/"], section[aria-label*="Stories" i], div[role="menu"], header, .vsc-fb-volume-capsule'
+          )
+        ) {
+          return;
+        }
       }
     },
     { capture: true }
@@ -1311,12 +1408,12 @@
     'wheel',
     (e) => {
       const volWrap = e.target?.closest?.('.vsc-invideo-volume-wrap, .vsc-invideo-volume-popup');
-      if (volWrap) {
+      const volInst = (volWrap ? volWrap.closest('.vsc-invideo-container')?._vscInstance : null) || findVolBtnAtPoint(e.clientX, e.clientY) || findVolPopupAtPoint(e.clientX, e.clientY);
+      if (volInst) {
         e.preventDefault();
         e.stopPropagation();
         e.stopImmediatePropagation();
-        const inst = volWrap.closest('.vsc-invideo-container')?._vscInstance;
-        if (inst) inst.handleVolumeWheel(e);
+        volInst.handleVolumeWheel(e);
         return;
       }
 
@@ -1477,6 +1574,14 @@
 
     isScrubberAtPoint(clientX, clientY) {
       return !!findScrubberAtPoint(clientX, clientY);
+    },
+
+    isVolBtnAtPoint(clientX, clientY) {
+      return !!findVolBtnAtPoint(clientX, clientY);
+    },
+
+    isVolPopupAtPoint(clientX, clientY) {
+      return !!findVolPopupAtPoint(clientX, clientY);
     }
   };
 

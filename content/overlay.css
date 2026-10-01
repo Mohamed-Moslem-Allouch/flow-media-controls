@@ -534,6 +534,8 @@ div[style*="linear-gradient(to top"] {
 /* Permanent Time Display to the Right */
 .vsc-invideo-time-display {
   flex-shrink: 0 !important;
+  min-width: 68px !important;
+  text-align: center !important;
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -649,12 +651,14 @@ div[style*="linear-gradient(to top"] {
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
+  width: 28px !important;
+  height: 28px !important;
   flex-shrink: 0 !important;
   pointer-events: auto !important;
   user-select: none !important;
   -webkit-user-select: none !important;
-  padding-top: 14px !important;
-  margin-top: -14px !important;
+  padding: 0 !important;
+  margin: 0 !important;
   cursor: pointer !important;
 }
 
@@ -747,19 +751,27 @@ div[style*="linear-gradient(to top"] {
 .vsc-invideo-volume-popup::after {
   content: '' !important;
   position: absolute !important;
-  bottom: -18px !important;
+  bottom: -24px !important;
   left: -12px !important;
   right: -12px !important;
-  height: 24px !important;
+  height: 32px !important;
   background: transparent !important;
   pointer-events: auto !important;
 }
 
 .vsc-invideo-volume-wrap:hover .vsc-invideo-volume-popup,
-.vsc-invideo-volume-wrap.vsc-volume-active .vsc-invideo-volume-popup {
+.vsc-invideo-volume-wrap.vsc-volume-active .vsc-invideo-volume-popup,
+.vsc-invideo-volume-wrap.vsc-vol-dragging .vsc-invideo-volume-popup {
   opacity: 1 !important;
   pointer-events: auto !important;
   transform: translateX(-50%) translateY(0) scale(1) !important;
+}
+
+/* Dragging state: Disable all transitions for instantaneous, lag-free responsiveness */
+.vsc-invideo-volume-wrap.vsc-vol-dragging .vsc-invideo-volume-popup,
+.vsc-invideo-volume-wrap.vsc-vol-dragging .vsc-invideo-volume-thumb,
+.vsc-invideo-volume-wrap.vsc-vol-dragging .vsc-invideo-volume-fill {
+  transition: none !important;
 }
 
 .vsc-invideo-volume-slider {
@@ -819,6 +831,17 @@ article video,
 .PolarisPostVideoPlayerWrapper video,
 div[role="presentation"] video {
   cursor: pointer !important;
+}
+
+/* ==========================================================================
+   Facebook Stories Shared Instagram Post Overlay Protection
+   Clip bottom hit-box so native story card overlays and sticker links
+   can never cover or hijack the in-video media control bar.
+   ========================================================================== */
+
+div[class*="storiesCardOverlay"],
+div[class*="storiesCardOverlay/root"] {
+  clip-path: inset(0 0 54px 0) !important;
 }
 
 /* ==========================================================================

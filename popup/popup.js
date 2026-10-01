@@ -19,7 +19,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   const toggleScrubberIG = document.getElementById('toggleScrubberIG');
   const toggleScrubberIGStoriesOnly = document.getElementById('toggleScrubberIGStoriesOnly');
   const subRowIGStoriesOnly = document.getElementById('subRowIGStoriesOnly');
-  const toggleAutoUnmute = document.getElementById('toggleAutoUnmute');
 
   // Facebook Toggles
   const toggleScrubberFB = document.getElementById('toggleScrubberFB');
@@ -150,7 +149,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       'inVideoScrubberIGStoriesOnly',
       'inVideoScrubberFB',
       'rememberSpeed',
-      'autoUnmuteStories',
       'theme'
     ]);
 
@@ -159,7 +157,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Instagram settings
     if (toggleScrubberIG) toggleScrubberIG.checked = settings.inVideoScrubberIG !== false;
     if (toggleScrubberIGStoriesOnly) toggleScrubberIGStoriesOnly.checked = !!settings.inVideoScrubberIGStoriesOnly;
-    if (toggleAutoUnmute) toggleAutoUnmute.checked = !!settings.autoUnmuteStories;
 
     // Facebook settings
     if (toggleScrubberFB) toggleScrubberFB.checked = settings.inVideoScrubberFB !== false;
@@ -187,12 +184,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (toggleScrubberIGStoriesOnly) {
     toggleScrubberIGStoriesOnly.addEventListener('change', (e) => {
       chrome.storage.local.set({ inVideoScrubberIGStoriesOnly: e.target.checked }).catch(() => {});
-    });
-  }
-
-  if (toggleAutoUnmute) {
-    toggleAutoUnmute.addEventListener('change', (e) => {
-      chrome.storage.local.set({ autoUnmuteStories: e.target.checked }).catch(() => {});
     });
   }
 
@@ -234,7 +225,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         inVideoScrubberIG: true,
         inVideoScrubberIGStoriesOnly: false,
         inVideoScrubberFB: true,
-        autoUnmuteStories: false,
         theme: 'auto'
       };
 
@@ -242,7 +232,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       if (toggleScrubberIG) toggleScrubberIG.checked = true;
       if (toggleScrubberIGStoriesOnly) toggleScrubberIGStoriesOnly.checked = false;
-      if (toggleAutoUnmute) toggleAutoUnmute.checked = false;
       if (toggleScrubberFB) toggleScrubberFB.checked = true;
       if (toggleBadge) toggleBadge.checked = true;
       if (toggleMinimized) toggleMinimized.checked = false;

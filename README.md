@@ -61,7 +61,7 @@ Unlike legacy speed controllers, Flow integrates natively into social media inte
 
 | Extension Dashboard | In-Video Scrubber | Reels Speed Control |
 | :---: | :---: | :---: |
-| <img src="icons/icon-128.png" width="200" alt="Dashboard Preview"> | <img src="icons/icon-128.png" width="200" alt="Scrubber Preview"> | <img src="icons/icon-128.png" width="200" alt="Reels Speed Preview"> |
+| <img src="icons/screenshots-and-demos/dashboard_preview.png" width="200" alt="Dashboard Preview"> | <img src="icons/screenshots-and-demos/scrubber_instagram.png" width="200" alt="Instagram Scrubber Preview"> <img src="icons/screenshots-and-demos/scrubber_facebook_story.png" width="200" alt="Facebook Story Scrubber Preview"> | <img src="icons/screenshots-and-demos/reels_speed_control.png" width="200" alt="Reels Speed Preview"> |
 | *Segmented Controls & Themes* | *Interactive Timeline & Scrub* | *Adaptive Action Column Button* |
 
 ---
@@ -95,7 +95,6 @@ Unlike legacy speed controllers, Flow integrates natively into social media inte
 
 ### Instagram Stories (`/stories/*`)
 - Hover over the story video to reveal the timeline scrubber and live duration badge.
-- Toggle **Auto-Unmute Stories** inside the extension popup to start story videos unmuted.
 
 ### Facebook Stories
 - Locate the circular sound capsule in the lower timeline row beside the timestamp.

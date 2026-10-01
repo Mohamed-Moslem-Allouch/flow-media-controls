@@ -35,4 +35,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Core video speed engine with anti-reset lock for Meta video players.
 - In-video live timeline scrubber for Instagram & Facebook.
 - Movable floating on-screen controller HUD.
-- Auto-unmute feature for Instagram Stories.

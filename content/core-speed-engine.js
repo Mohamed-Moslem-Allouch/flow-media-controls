@@ -37,7 +37,6 @@
       'inVideoScrubberFB',
       'inVideoScrubberFBAll',
       'showScrubberTime',
-      'autoUnmuteStories',
       'theme'
     ],
     (items) => {
@@ -60,11 +59,6 @@
           inVideoScrubberFBAll: !!items.inVideoScrubberFBAll,
           showScrubberTime: items.showScrubberTime !== false
         });
-      }
-
-      // Initialize Platform Custom Features
-      if (window.InstagramCustomFeatures) {
-        if (items.autoUnmuteStories !== undefined) window.InstagramCustomFeatures.config.autoUnmuteStories = !!items.autoUnmuteStories;
       }
 
       // Initialize Movable Widget
@@ -192,10 +186,6 @@
     }
     if (hasScrubberChanges && window.InVideoScrubber) {
       window.InVideoScrubber.updateConfig(scrubberChanges);
-    }
-
-    if (window.InstagramCustomFeatures && changes.autoUnmuteStories !== undefined) {
-      window.InstagramCustomFeatures.config.autoUnmuteStories = !!changes.autoUnmuteStories.newValue;
     }
   });
 

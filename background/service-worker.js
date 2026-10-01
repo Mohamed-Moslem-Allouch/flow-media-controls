@@ -16,7 +16,6 @@ const DEFAULT_SETTINGS = {
   showScrubberTime: true,
   enableHotkeys: true,
   rememberSpeed: true,
-  autoUnmuteStories: false,
   fastSpeed: 2.0,
   widgetPos: { top: 90, left: 30 }
 };

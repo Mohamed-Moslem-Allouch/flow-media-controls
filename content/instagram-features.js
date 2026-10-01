@@ -5,32 +5,13 @@
  * -----------------------------------------------------------
  * Features:
  *  - Native Reels speed button (adaptive light/dark)
- *  - Auto-unmute stories option
  */
 
 (function () {
   'use strict';
 
   const InstagramCustomFeatures = {
-    config: {
-      autoUnmuteStories: false
-    },
-
     init() {
-      try {
-        chrome.storage.local.get(['autoUnmuteStories'], (res) => {
-          if (res && res.autoUnmuteStories !== undefined) {
-            this.config.autoUnmuteStories = !!res.autoUnmuteStories;
-          }
-        });
-
-        chrome.storage.onChanged.addListener((changes, area) => {
-          if (area === 'local' && changes.autoUnmuteStories) {
-            this.config.autoUnmuteStories = !!changes.autoUnmuteStories.newValue;
-          }
-        });
-      } catch (e) {}
-
       this.setupVideoTapHandler();
       this.setupReelsSpeedButton();
     },
@@ -95,11 +76,13 @@
             return;
           }
 
-          // Ignore if click is over our Play/Pause button or timeline scrubber (by coordinates)
+          // Ignore if click is over our Play/Pause button, timeline scrubber, or volume controls (by coordinates)
           if (window.InVideoScrubber) {
             if (
               window.InVideoScrubber.isPlayBtnAtPoint?.(e.clientX, e.clientY) ||
-              window.InVideoScrubber.isScrubberAtPoint?.(e.clientX, e.clientY)
+              window.InVideoScrubber.isScrubberAtPoint?.(e.clientX, e.clientY) ||
+              window.InVideoScrubber.isVolBtnAtPoint?.(e.clientX, e.clientY) ||
+              window.InVideoScrubber.isVolPopupAtPoint?.(e.clientX, e.clientY)
             ) {
               return;
             }
@@ -407,25 +390,6 @@
       } catch (e) {}
 
       this.updateSpeedLabels = updateAllSpeedLabels;
-    },
-
-    /**
-     * Triggered when a new video is found on Instagram
-     * @param {HTMLVideoElement} video
-     * @param {Object} context - { isStory, isReel }
-     */
-    onVideoDetected(video, context) {
-      if (!video) return;
-
-      const isStory = context?.isStory || window.location.pathname.startsWith('/stories') || window.location.href.includes('/stories');
-      if (isStory) {
-        // Auto-unmute stories if enabled
-        if (this.config.autoUnmuteStories && video.muted) {
-          try {
-            video.muted = false;
-          } catch (e) {}
-        }
-      }
     }
   };
 
