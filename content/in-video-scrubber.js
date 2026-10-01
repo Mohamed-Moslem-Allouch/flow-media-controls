@@ -248,7 +248,6 @@
       if (pos === 'static') {
         el.style.position = 'relative';
       }
-      el.style.setProperty('z-index', '99999', 'important');
     } catch (e) {}
   }
 
@@ -312,15 +311,6 @@
 
     const targetContainer = videoStage || parent;
     ensurePositioned(targetContainer);
-
-    // Keep any overlay / scrim sibling below our z-2147483647 controls
-    try {
-      for (const child of targetContainer.children) {
-        if (!child.classList.contains('vsc-invideo-container') && !child.contains(video)) {
-          child.style.setProperty('z-index', '2', 'important');
-        }
-      }
-    } catch (e) {}
 
     return targetContainer;
   }
@@ -1048,6 +1038,45 @@
   /**
    * Find if a coordinate (clientX, clientY) is over any active scrubber bar hit area
    */
+  /**
+   * Checks if screen coordinates are covered by an external UI layer
+   * (such as a modal dialog, backdrop, close button, or header menu)
+   * so the in-video controls never steal clicks or pointer events from host UI.
+   */
+  function isPointBlockedByExternalLayer(clientX, clientY, inst) {
+    if (typeof clientX !== 'number' || typeof clientY !== 'number') return true;
+    try {
+      const topEl = document.elementFromPoint(clientX, clientY);
+      if (!topEl) return false;
+
+      // If topEl is a close, dismiss, back, or navigation button, NEVER claim
+      if (
+        topEl.closest(
+          '[aria-label*="Close" i], [aria-label*="Fermer" i], [aria-label*="Schließen" i], [aria-label*="Chiudi" i], [aria-label*="Cerrar" i], [aria-label*="Dismiss" i], [aria-label*="Back" i], [aria-label*="Retour" i], [data-testid*="close" i], [data-testid*="dismiss" i]'
+        )
+      ) {
+        return true;
+      }
+
+      // If an active modal is in the DOM, but our video is NOT inside that modal, don't claim
+      const activeModal = document.querySelector('div[role="dialog"], [aria-modal="true"]');
+      if (activeModal && !activeModal.contains(inst.video)) {
+        return true;
+      }
+
+      // If topEl is outside our video overlay and outside the video's parent container
+      // (meaning a modal backdrop, external menu, header, etc. covers the point)
+      if (
+        !inst.overlayEl.contains(topEl) &&
+        !inst.video.contains(topEl) &&
+        !inst.video.parentElement?.contains(topEl)
+      ) {
+        return true;
+      }
+    } catch (e) {}
+    return false;
+  }
+
   function findScrubberAtPoint(clientX, clientY) {
     if (typeof clientX !== 'number' || typeof clientY !== 'number') return null;
 
@@ -1067,6 +1096,7 @@
       const right = rect.right;
 
       if (clientX >= left && clientX <= right && clientY >= top && clientY <= bottom) {
+        if (isPointBlockedByExternalLayer(clientX, clientY, inst)) continue;
         return inst;
       }
     }
@@ -1090,6 +1120,7 @@
       const right = rect.right + 6;
 
       if (clientX >= left && clientX <= right && clientY >= top && clientY <= bottom) {
+        if (isPointBlockedByExternalLayer(clientX, clientY, inst)) continue;
         return inst;
       }
     }
@@ -1113,6 +1144,7 @@
       const right = rect.right + 8;
 
       if (clientX >= left && clientX <= right && clientY >= top && clientY <= bottom) {
+        if (isPointBlockedByExternalLayer(clientX, clientY, inst)) continue;
         return inst;
       }
     }
@@ -1141,6 +1173,7 @@
       const right = rect.right + 10;
 
       if (clientX >= left && clientX <= right && clientY >= top && clientY <= bottom) {
+        if (isPointBlockedByExternalLayer(clientX, clientY, inst)) continue;
         return inst;
       }
     }
@@ -1162,6 +1195,17 @@
     }
 
     const directOverlay = e.target?.closest?.('.vsc-invideo-container');
+
+    // NEVER intercept close, dismiss, back, dialog, stories, or header controls
+    if (!directOverlay) {
+      if (
+        e.target?.closest?.(
+          '[aria-label*="Close" i], [aria-label*="Fermer" i], [aria-label*="Schließen" i], [aria-label*="Chiudi" i], [aria-label*="Cerrar" i], [aria-label*="Dismiss" i], [aria-label*="Back" i], [aria-label*="Retour" i], [data-testid*="close" i], [data-testid*="dismiss" i], a[href*="/stories/"], section[aria-label*="Stories" i], div[role="menu"], header, .vsc-fb-volume-capsule'
+        )
+      ) {
+        return;
+      }
+    }
 
     // 1. Direct hit or coordinate hit on Play/Pause button
     const playBtnHit = e.target?.closest?.('.vsc-invideo-play-btn') ? directOverlay?._vscInstance : findPlayBtnAtPoint(clientX, clientY);
@@ -1351,6 +1395,17 @@
 
       const directOverlay = e.target?.closest?.('.vsc-invideo-container');
 
+      // NEVER intercept close, dismiss, back, dialog, stories, or header controls
+      if (!directOverlay) {
+        if (
+          e.target?.closest?.(
+            '[aria-label*="Close" i], [aria-label*="Fermer" i], [aria-label*="Schließen" i], [aria-label*="Chiudi" i], [aria-label*="Cerrar" i], [aria-label*="Dismiss" i], [aria-label*="Back" i], [aria-label*="Retour" i], [data-testid*="close" i], [data-testid*="dismiss" i], a[href*="/stories/"], section[aria-label*="Stories" i], div[role="menu"], header, .vsc-fb-volume-capsule'
+          )
+        ) {
+          return;
+        }
+      }
+
       // Check if click is on or over Volume button (element target OR screen coordinates)
       const volBtn = e.target?.closest?.('.vsc-invideo-volume-btn');
       const volBtnInst = (volBtn ? volBtn.closest('.vsc-invideo-container')?._vscInstance : null) || findVolBtnAtPoint(clientX, clientY);
@@ -1387,17 +1442,6 @@
         e.stopPropagation();
         e.stopImmediatePropagation();
         return;
-      }
-
-      // NEVER intercept Stories button or Stories tray clicks
-      if (!directOverlay) {
-        if (
-          e.target?.closest?.(
-            'a[href*="/stories/"], section[aria-label*="Stories" i], div[role="menu"], header, .vsc-fb-volume-capsule'
-          )
-        ) {
-          return;
-        }
       }
     },
     { capture: true }

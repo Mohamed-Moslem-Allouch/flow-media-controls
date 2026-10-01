@@ -59,10 +59,23 @@
           // If this was a scroll swipe gesture, ignore
           if (touchMoved) return;
 
-          // NEVER intercept on Stories pages or inside modal dialogs
+          // NEVER intercept on post pages (/p/), stories, direct messages, or if any modal is active
+          const path = window.location.pathname;
           if (
-            window.location.pathname.startsWith('/stories/') ||
-            e.target?.closest?.('div[role="dialog"]')
+            path.startsWith('/p/') ||
+            path.startsWith('/stories/') ||
+            path.startsWith('/direct/') ||
+            path.startsWith('/accounts/') ||
+            document.querySelector('div[role="dialog"], [aria-modal="true"]')
+          ) {
+            return;
+          }
+
+          // NEVER intercept clicks on close/dismiss/back buttons, modal overlays, dialogs, or backdrops
+          if (
+            e.target?.closest?.(
+              '[aria-label*="Close" i], [aria-label*="Fermer" i], [aria-label*="Schließen" i], [aria-label*="Chiudi" i], [aria-label*="Cerrar" i], [aria-label*="Dismiss" i], [aria-label*="Back" i], [aria-label*="Retour" i], [data-testid*="close" i], [data-testid*="dismiss" i], div[role="dialog"], [aria-modal="true"]'
+            )
           ) {
             return;
           }
@@ -100,7 +113,7 @@
           // Ignore native action buttons, links, comments, author profile links, form controls
           if (
             e.target?.closest?.(
-              'button, a, input, textarea, form, [contenteditable="true"], [role="button"], [aria-label*="Like" i], [aria-label*="Comment" i], [aria-label*="Share" i], [aria-label*="Save" i], [aria-label*="Audio" i], [aria-label*="sound" i], [aria-label*="mute" i], [aria-label*="Options" i], [aria-label*="More" i]'
+              'button, a, input, textarea, form, [contenteditable="true"], [role="button"], [aria-label*="Like" i], [aria-label*="Comment" i], [aria-label*="Share" i], [aria-label*="Save" i], [aria-label*="Audio" i], [aria-label*="sound" i], [aria-label*="mute" i], [aria-label*="Options" i], [aria-label*="More" i], [aria-label*="Close" i], [aria-label*="Back" i]'
             )
           ) {
             return;
@@ -111,9 +124,9 @@
           if (e.target.tagName === 'VIDEO') {
             video = e.target;
           } else {
-            // Find video container or anchor wrapping the video
+            // Find video container or anchor wrapping the video (never include /p/ links)
             const playerWrapper = e.target.closest?.(
-              'article div[role="presentation"], .PolarisPostVideoPlayerWrapper, a[href*="/reel/"], a[href*="/p/"], div[data-visualcompletion="media-vc-image"]'
+              'article div[role="presentation"], .PolarisPostVideoPlayerWrapper, a[href*="/reel/"], div[data-visualcompletion="media-vc-image"]'
             );
             if (playerWrapper) {
               video = playerWrapper.querySelector('video');
@@ -125,7 +138,7 @@
           // Never intercept videos inside dialogs, headers, or stories containers
           if (
             video.closest(
-              'div[role="dialog"], header, section[aria-label*="Stories" i], div[role="menu"]'
+              'div[role="dialog"], [aria-modal="true"], header, section[aria-label*="Stories" i], div[role="menu"]'
             )
           ) {
             return;
@@ -140,7 +153,7 @@
             e.clientY <= vRect.bottom
           ) {
             // DIRECT HIT ON VIDEO SURFACE!
-            // Prevent navigation to reel/post URL
+            // Prevent navigation to reel URL
             e.preventDefault();
             e.stopPropagation();
             e.stopImmediatePropagation();
