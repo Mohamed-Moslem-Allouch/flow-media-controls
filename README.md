@@ -12,11 +12,12 @@
   <a href="https://github.com/Mohamed-Moslem-Allouch/flow-media-controls/releases"><img src="https://img.shields.io/badge/version-1.1.0-6366f1.svg?style=flat-square" alt="Version"></a>
   <a href="https://developer.chrome.com/docs/extensions/mv3/"><img src="https://img.shields.io/badge/manifest-v3-blue.svg?style=flat-square" alt="Manifest V3"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-emerald.svg?style=flat-square" alt="License"></a>
+  <a href="https://github.com/Mohamed-Moslem-Allouch/flow-media-controls"><img src="https://img.shields.io/badge/built%20with-vibecoding-ff69b4.svg?style=flat-square" alt="Built with vibecoding"></a>
   <a href="https://github.com/Mohamed-Moslem-Allouch/flow-media-controls/pulls"><img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square" alt="PRs Welcome"></a>
 </p>
 
 <p align="center">
-  <sub>Made with ❤️ by <strong>Mohamed Moslem Allouch</strong></sub>
+  <sub>Made with ❤️ and vibecoding by <strong>Mohamed Moslem Allouch</strong></sub>
 </p>
 
 ---
@@ -173,9 +174,10 @@ Copyright © 2025 **Mohamed Moslem Allouch**.
 **Mohamed Moslem Allouch**
 - GitHub: [@Mohamed-Moslem-Allouch](https://github.com/Mohamed-Moslem-Allouch)
 - Project: [Flow — Media Controls](https://github.com/Mohamed-Moslem-Allouch/flow-media-controls)
+- Built with: **vibecoding**
 
 ---
 
 <p align="center">
-  <sub>Made by Mohamed Moslem Allouch</sub>
+  <sub>Made by Mohamed Moslem Allouch with vibecoding</sub>
 </p>
