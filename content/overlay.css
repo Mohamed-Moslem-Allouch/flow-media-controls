@@ -383,17 +383,9 @@
   opacity: 1 !important;
 }
 
-/* Instagram Reels: Force dark gradient scrims to stay behind in-video controls */
-article ._aato,
-article div[style*="linear-gradient"],
-.PolarisPostVideoPlayerWrapper ._aato,
-.PolarisPostVideoPlayerWrapper div[style*="linear-gradient"],
-div[data-visualcompletion="media-vc-image"] ~ div[style*="linear-gradient"],
-div[data-visualcompletion="media-vc-image"] ._aato,
-div[style*="linear-gradient(rgba(0, 0, 0, 0)"],
-div[style*="linear-gradient(to top"] {
+/* Instagram Reels: Keep in-video controls above local media overlays */
+.PolarisPostVideoPlayerWrapper > div[style*="linear-gradient"] {
   z-index: 1 !important;
-  pointer-events: none !important;
 }
 
 .vsc-invideo-container:hover,
@@ -841,7 +833,12 @@ div[role="presentation"] video {
 
 div[class*="storiesCardOverlay"],
 div[class*="storiesCardOverlay/root"] {
-  clip-path: inset(0 0 54px 0) !important;
+  clip-path: inset(0 0 180px 0) !important;
+}
+
+div[class*="storiesCardOverlay"] a[href*="instagram.com"],
+div[class*="storiesCardOverlay/root"] a[href*="instagram.com"] {
+  pointer-events: none !important;
 }
 
 /* ==========================================================================
@@ -1080,36 +1077,25 @@ div[class*="storiesCardOverlay/root"] {
 }
 
 /* Light Mode Adaptation for Reels Speed Up Action (White Mode Support) */
-.vsc-reel-speed-item.vsc-is-light-mode .vsc-reel-speed-btn,
-:root.vsc-theme-light .vsc-reel-speed-btn,
-:root[data-vsc-theme="light"] .vsc-reel-speed-btn,
-:root:not(._9dls) .vsc-reel-speed-item.vsc-is-light-mode .vsc-reel-speed-btn {
+.vsc-reel-speed-item.vsc-is-light-mode .vsc-reel-speed-btn {
   background: rgba(0, 0, 0, 0.06) !important;
   border: 1px solid rgba(0, 0, 0, 0.14) !important;
   color: #18191a !important;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08) !important;
 }
 
-.vsc-reel-speed-item.vsc-is-light-mode .vsc-reel-speed-btn:hover,
-:root.vsc-theme-light .vsc-reel-speed-btn:hover,
-:root[data-vsc-theme="light"] .vsc-reel-speed-btn:hover,
-:root:not(._9dls) .vsc-reel-speed-item.vsc-is-light-mode .vsc-reel-speed-btn:hover {
+.vsc-reel-speed-item.vsc-is-light-mode .vsc-reel-speed-btn:hover {
   background: rgba(0, 0, 0, 0.12) !important;
   border-color: rgba(0, 0, 0, 0.24) !important;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.14) !important;
   color: #000000 !important;
 }
 
-.vsc-reel-speed-item.vsc-is-light-mode .vsc-reel-speed-btn:active,
-:root.vsc-theme-light .vsc-reel-speed-btn:active,
-:root[data-vsc-theme="light"] .vsc-reel-speed-btn:active {
+.vsc-reel-speed-item.vsc-is-light-mode .vsc-reel-speed-btn:active {
   background: rgba(0, 0, 0, 0.18) !important;
 }
 
-.vsc-reel-speed-item.vsc-is-light-mode .vsc-reel-speed-label,
-:root.vsc-theme-light .vsc-reel-speed-label,
-:root[data-vsc-theme="light"] .vsc-reel-speed-label,
-:root:not(._9dls) .vsc-reel-speed-item.vsc-is-light-mode .vsc-reel-speed-label {
+.vsc-reel-speed-item.vsc-is-light-mode .vsc-reel-speed-label {
   color: #18191a !important;
   text-shadow: none !important;
 }

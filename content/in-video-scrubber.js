@@ -264,7 +264,12 @@
     const parent = video.parentElement;
     if (!parent) return null;
 
-    if (isStoryVideo(video)) {
+    // On Instagram: ALWAYS mount directly onto video.parentElement.
+    // Instagram's React layout strictly isolates video media in its direct parent.
+    // Never traverse up the DOM tree to <article> or column wrappers on Instagram,
+    // which prevents modal unmounting, React reconciliation crashes, and layout conflicts.
+    // On Stories (FB & IG): also mount directly onto video.parentElement.
+    if (window.location.hostname.includes('instagram.com') || isStoryVideo(video)) {
       ensurePositioned(parent);
       return parent;
     }
@@ -1036,53 +1041,33 @@
   }
 
   /**
-   * Find if a coordinate (clientX, clientY) is over any active scrubber bar hit area
+   * Checks if a video element is in the background while a modal dialog is active.
+   * If an active modal is in the DOM and does NOT contain this video, the video
+   * is considered covered so its controls will not steal interactions.
    */
-  /**
-   * Checks if screen coordinates are covered by an external UI layer
-   * (such as a modal dialog, backdrop, close button, or header menu)
-   * so the in-video controls never steal clicks or pointer events from host UI.
-   */
-  function isPointBlockedByExternalLayer(clientX, clientY, inst) {
-    if (typeof clientX !== 'number' || typeof clientY !== 'number') return true;
+  function isVideoCoveredByModal(video) {
     try {
-      const topEl = document.elementFromPoint(clientX, clientY);
-      if (!topEl) return false;
-
-      // If topEl is a close, dismiss, back, or navigation button, NEVER claim
-      if (
-        topEl.closest(
-          '[aria-label*="Close" i], [aria-label*="Fermer" i], [aria-label*="Schließen" i], [aria-label*="Chiudi" i], [aria-label*="Cerrar" i], [aria-label*="Dismiss" i], [aria-label*="Back" i], [aria-label*="Retour" i], [data-testid*="close" i], [data-testid*="dismiss" i]'
-        )
-      ) {
-        return true;
-      }
-
-      // If an active modal is in the DOM, but our video is NOT inside that modal, don't claim
       const activeModal = document.querySelector('div[role="dialog"], [aria-modal="true"]');
-      if (activeModal && !activeModal.contains(inst.video)) {
-        return true;
-      }
-
-      // If topEl is outside our video overlay and outside the video's parent container
-      // (meaning a modal backdrop, external menu, header, etc. covers the point)
-      if (
-        !inst.overlayEl.contains(topEl) &&
-        !inst.video.contains(topEl) &&
-        !inst.video.parentElement?.contains(topEl)
-      ) {
+      if (activeModal && !activeModal.contains(video)) {
         return true;
       }
     } catch (e) {}
     return false;
   }
 
+  /**
+   * Find if a coordinate (clientX, clientY) is over any active scrubber bar hit area
+   */
   function findScrubberAtPoint(clientX, clientY) {
     if (typeof clientX !== 'number' || typeof clientY !== 'number') return null;
+
+    let bestInst = null;
+    let bestPriority = -1;
 
     for (const [video, inst] of scrubbers.entries()) {
       if (!video.isConnected || video.offsetWidth === 0 || video.offsetHeight === 0) continue;
       if (!inst.overlayEl || !inst.overlayEl.isConnected) continue;
+      if (isVideoCoveredByModal(video)) continue;
 
       const targetEl = inst.barWrapEl;
       if (!targetEl) continue;
@@ -1096,19 +1081,27 @@
       const right = rect.right;
 
       if (clientX >= left && clientX <= right && clientY >= top && clientY <= bottom) {
-        if (isPointBlockedByExternalLayer(clientX, clientY, inst)) continue;
-        return inst;
+        const isModal = Boolean(video.closest('div[role="dialog"], [aria-modal="true"]'));
+        const priority = isModal ? 10 : 1;
+        if (priority > bestPriority) {
+          bestPriority = priority;
+          bestInst = inst;
+        }
       }
     }
-    return null;
+    return bestInst;
   }
 
   function findPlayBtnAtPoint(clientX, clientY) {
     if (typeof clientX !== 'number' || typeof clientY !== 'number') return null;
 
+    let bestInst = null;
+    let bestPriority = -1;
+
     for (const [video, inst] of scrubbers.entries()) {
       if (!video.isConnected || video.offsetWidth === 0 || video.offsetHeight === 0) continue;
       if (!inst.overlayEl || !inst.overlayEl.isConnected || !inst.playBtnEl) continue;
+      if (isVideoCoveredByModal(video)) continue;
 
       const rect = inst.playBtnEl.getBoundingClientRect();
       if (rect.width <= 0 || rect.height <= 0) continue;
@@ -1120,11 +1113,15 @@
       const right = rect.right + 6;
 
       if (clientX >= left && clientX <= right && clientY >= top && clientY <= bottom) {
-        if (isPointBlockedByExternalLayer(clientX, clientY, inst)) continue;
-        return inst;
+        const isModal = Boolean(video.closest('div[role="dialog"], [aria-modal="true"]'));
+        const priority = isModal ? 10 : 1;
+        if (priority > bestPriority) {
+          bestPriority = priority;
+          bestInst = inst;
+        }
       }
     }
-    return null;
+    return bestInst;
   }
 
   function findVolBtnAtPoint(clientX, clientY) {
@@ -1133,6 +1130,7 @@
     for (const [video, inst] of scrubbers.entries()) {
       if (!video.isConnected || video.offsetWidth === 0 || video.offsetHeight === 0) continue;
       if (!inst.overlayEl || !inst.overlayEl.isConnected || !inst.volBtnEl) continue;
+      if (isVideoCoveredByModal(video)) continue;
 
       const rect = inst.volBtnEl.getBoundingClientRect();
       if (rect.width <= 0 || rect.height <= 0) continue;
@@ -1144,7 +1142,6 @@
       const right = rect.right + 8;
 
       if (clientX >= left && clientX <= right && clientY >= top && clientY <= bottom) {
-        if (isPointBlockedByExternalLayer(clientX, clientY, inst)) continue;
         return inst;
       }
     }
@@ -1157,6 +1154,7 @@
     for (const [video, inst] of scrubbers.entries()) {
       if (!video.isConnected || video.offsetWidth === 0 || video.offsetHeight === 0) continue;
       if (!inst.overlayEl || !inst.overlayEl.isConnected || !inst.volWrapEl) continue;
+      if (isVideoCoveredByModal(video)) continue;
 
       const targetEl = (inst.volWrapEl.classList.contains('vsc-volume-active') || inst.isVolDragging) && inst.volPopupEl
         ? inst.volPopupEl
@@ -1173,12 +1171,12 @@
       const right = rect.right + 10;
 
       if (clientX >= left && clientX <= right && clientY >= top && clientY <= bottom) {
-        if (isPointBlockedByExternalLayer(clientX, clientY, inst)) continue;
         return inst;
       }
     }
     return null;
   }
+
 
   // --------------------------------------------------------------------------
   // Global Window-Level Capture Event Handlers (100% Unblockable Interactions)
@@ -1208,7 +1206,7 @@
     }
 
     // 1. Direct hit or coordinate hit on Play/Pause button
-    const playBtnHit = e.target?.closest?.('.vsc-invideo-play-btn') ? directOverlay?._vscInstance : findPlayBtnAtPoint(clientX, clientY);
+    const playBtnHit = (e.target?.closest?.('.vsc-invideo-play-btn') ? directOverlay?._vscInstance : null) || findPlayBtnAtPoint(clientX, clientY);
     if (playBtnHit) {
       e.preventDefault();
       e.stopPropagation();
@@ -1221,7 +1219,7 @@
     const volSliderTarget = e.target?.closest?.(
       '.vsc-invideo-volume-wrap, .vsc-invideo-volume-popup, .vsc-invideo-volume-slider, .vsc-invideo-volume-track, .vsc-invideo-volume-thumb, .vsc-invideo-volume-fill'
     );
-    const volSliderHit = volSliderTarget ? volSliderTarget.closest('.vsc-invideo-container')?._vscInstance : findVolPopupAtPoint(clientX, clientY);
+    const volSliderHit = (volSliderTarget ? volSliderTarget.closest('.vsc-invideo-container')?._vscInstance : null) || findVolPopupAtPoint(clientX, clientY);
     if (volSliderHit) {
       e.preventDefault();
       e.stopPropagation();
@@ -1232,7 +1230,8 @@
     }
 
     // 3. Direct hit or coordinate hit on Volume speaker button
-    const volBtnHit = e.target?.closest?.('.vsc-invideo-volume-btn') ? directOverlay?._vscInstance : findVolBtnAtPoint(clientX, clientY);
+    const volBtnTarget = e.target?.closest?.('.vsc-invideo-volume-btn');
+    const volBtnHit = (volBtnTarget ? directOverlay?._vscInstance : null) || findVolBtnAtPoint(clientX, clientY);
     if (volBtnHit) {
       e.preventDefault();
       e.stopPropagation();
@@ -1433,6 +1432,7 @@
         e.preventDefault();
         e.stopPropagation();
         e.stopImmediatePropagation();
+        playInst.togglePlay();
         return;
       }
 

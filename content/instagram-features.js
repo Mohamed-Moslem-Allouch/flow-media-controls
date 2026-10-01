@@ -12,167 +12,15 @@
 
   const InstagramCustomFeatures = {
     init() {
-      this.setupVideoTapHandler();
       this.setupReelsSpeedButton();
     },
 
-    /**
-     * Intercept clicks/taps on video surfaces (Reels & Feed videos)
-     * - Prevents unwanted navigation to the Reel's URL
-     * - Toggles play/pause reliably on both click and touch
-     * - Preserves Stories tray, extension UI, and native interaction buttons
-     */
     setupVideoTapHandler() {
-      let touchStartX = 0;
-      let touchStartY = 0;
-      let touchMoved = false;
-
-      window.addEventListener(
-        'touchstart',
-        (e) => {
-          if (e.touches && e.touches.length > 0) {
-            touchStartX = e.touches[0].clientX;
-            touchStartY = e.touches[0].clientY;
-            touchMoved = false;
-          }
-        },
-        { capture: true, passive: true }
-      );
-
-      window.addEventListener(
-        'touchmove',
-        (e) => {
-          if (e.touches && e.touches.length > 0) {
-            const dx = Math.abs(e.touches[0].clientX - touchStartX);
-            const dy = Math.abs(e.touches[0].clientY - touchStartY);
-            if (dx > 10 || dy > 10) {
-              touchMoved = true;
-            }
-          }
-        },
-        { capture: true, passive: true }
-      );
-
-      window.addEventListener(
-        'click',
-        (e) => {
-          // If this was a scroll swipe gesture, ignore
-          if (touchMoved) return;
-
-          // NEVER intercept on post pages (/p/), stories, direct messages, or if any modal is active
-          const path = window.location.pathname;
-          if (
-            path.startsWith('/p/') ||
-            path.startsWith('/stories/') ||
-            path.startsWith('/direct/') ||
-            path.startsWith('/accounts/') ||
-            document.querySelector('div[role="dialog"], [aria-modal="true"]')
-          ) {
-            return;
-          }
-
-          // NEVER intercept clicks on close/dismiss/back buttons, modal overlays, dialogs, or backdrops
-          if (
-            e.target?.closest?.(
-              '[aria-label*="Close" i], [aria-label*="Fermer" i], [aria-label*="Schließen" i], [aria-label*="Chiudi" i], [aria-label*="Cerrar" i], [aria-label*="Dismiss" i], [aria-label*="Back" i], [aria-label*="Retour" i], [data-testid*="close" i], [data-testid*="dismiss" i], div[role="dialog"], [aria-modal="true"]'
-            )
-          ) {
-            return;
-          }
-
-          // Ignore if clicking on extension UI
-          if (
-            e.target?.closest?.(
-              '.vsc-invideo-container, #vsc-movable-widget, .vsc-speed-badge, .vsc-controller, .vsc-preset-btn, .vsc-timeline-row, .vsc-reel-speed-item, .vsc-reel-speed-btn, .vsc-reel-speed-label, .vsc-story-speed-item, .vsc-story-speed-btn, .vsc-story-speed-label'
-            )
-          ) {
-            return;
-          }
-
-          // Ignore if click is over our Play/Pause button, timeline scrubber, or volume controls (by coordinates)
-          if (window.InVideoScrubber) {
-            if (
-              window.InVideoScrubber.isPlayBtnAtPoint?.(e.clientX, e.clientY) ||
-              window.InVideoScrubber.isScrubberAtPoint?.(e.clientX, e.clientY) ||
-              window.InVideoScrubber.isVolBtnAtPoint?.(e.clientX, e.clientY) ||
-              window.InVideoScrubber.isVolPopupAtPoint?.(e.clientX, e.clientY)
-            ) {
-              return;
-            }
-          }
-
-          // Ignore Stories button, Stories tray, and Stories viewer
-          if (
-            e.target?.closest?.(
-              'a[href*="/stories/"], [aria-label*="story" i], [aria-label*="stories" i], [data-testid*="story" i], section[aria-label*="Stories" i], div[role="menu"], header'
-            )
-          ) {
-            return;
-          }
-
-          // Ignore native action buttons, links, comments, author profile links, form controls
-          if (
-            e.target?.closest?.(
-              'button, a, input, textarea, form, [contenteditable="true"], [role="button"], [aria-label*="Like" i], [aria-label*="Comment" i], [aria-label*="Share" i], [aria-label*="Save" i], [aria-label*="Audio" i], [aria-label*="sound" i], [aria-label*="mute" i], [aria-label*="Options" i], [aria-label*="More" i], [aria-label*="Close" i], [aria-label*="Back" i]'
-            )
-          ) {
-            return;
-          }
-
-          // Check if target is a video or inside a video player surface
-          let video = null;
-          if (e.target.tagName === 'VIDEO') {
-            video = e.target;
-          } else {
-            // Find video container or anchor wrapping the video (never include /p/ links)
-            const playerWrapper = e.target.closest?.(
-              'article div[role="presentation"], .PolarisPostVideoPlayerWrapper, a[href*="/reel/"], div[data-visualcompletion="media-vc-image"]'
-            );
-            if (playerWrapper) {
-              video = playerWrapper.querySelector('video');
-            }
-          }
-
-          if (!video || !video.isConnected) return;
-
-          // Never intercept videos inside dialogs, headers, or stories containers
-          if (
-            video.closest(
-              'div[role="dialog"], [aria-modal="true"], header, section[aria-label*="Stories" i], div[role="menu"]'
-            )
-          ) {
-            return;
-          }
-
-          // Verify click coordinates are inside the video element bounds
-          const vRect = video.getBoundingClientRect();
-          if (
-            e.clientX >= vRect.left &&
-            e.clientX <= vRect.right &&
-            e.clientY >= vRect.top &&
-            e.clientY <= vRect.bottom
-          ) {
-            // DIRECT HIT ON VIDEO SURFACE!
-            // Prevent navigation to reel URL
-            e.preventDefault();
-            e.stopPropagation();
-            e.stopImmediatePropagation();
-
-            // Toggle play/pause
-            if (video._vscScrubber && typeof video._vscScrubber.togglePlay === 'function') {
-              video._vscScrubber.togglePlay();
-            } else {
-              if (video.paused) {
-                video.play().catch(() => {});
-              } else {
-                video.pause();
-              }
-            }
-          }
-        },
-        { capture: true }
-      );
+      // Intentionally inert: Instagram natively manages video clicks and play/pause.
+      // Eliminating window-level capture click listeners prevents any interference
+      // with Instagram post modals, dialog close ('X') buttons, backdrops, and navigation.
     },
+
 
     /**
      * Injects a native-styled "Speed Up" action button directly attached to the
@@ -198,24 +46,55 @@
         });
       };
 
-      const checkIsLightMode = (heartEl) => {
-        // 1. Direct inspection of Instagram heart icon or its SVG fill/color
-        if (heartEl) {
-          const svg = heartEl.tagName === 'SVG' ? heartEl : heartEl.querySelector('svg');
-          const target = svg || heartEl;
+      const checkIsLightMode = (heartEl, container) => {
+        // 1. Inspect neutral action buttons in the vertical action bar (Comment, Share, Save)
+        // These NEVER change to red when liked, so their computed color represents the true UI tone.
+        let neutralTarget = null;
+        if (container) {
+          neutralTarget = container.querySelector(
+            'svg[aria-label*="Comment" i], svg[aria-label*="Share" i], svg[aria-label*="Save" i], ' +
+            'button[aria-label*="Comment" i] svg, button[aria-label*="Share" i] svg, ' +
+            '[aria-label*="Comment" i] svg, [aria-label*="Share" i] svg'
+          );
+        }
+
+        const candidateEl = neutralTarget || heartEl;
+        if (candidateEl) {
+          const svg = candidateEl.tagName === 'SVG' ? candidateEl : candidateEl.querySelector('svg');
+          const target = svg || candidateEl;
           const cs = window.getComputedStyle(target);
           const colorVal = cs.color || cs.fill;
           if (colorVal && colorVal.startsWith('rgb')) {
             const m = colorVal.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
             if (m) {
-              const lum = (parseInt(m[1], 10) * 299 + parseInt(m[2], 10) * 587 + parseInt(m[3], 10) * 114) / 1000;
-              if (lum < 140) return true;  // dark icon = light background
-              if (lum > 180) return false; // light icon = dark background
+              const r = parseInt(m[1], 10);
+              const g = parseInt(m[2], 10);
+              const b = parseInt(m[3], 10);
+
+              // Check if color is red / saturated (e.g. liked heart rgb(255, 48, 64) or rgb(237, 73, 86))
+              // Saturated red colors must NEVER be treated as dark/black icons!
+              const isRedOrColored = r > 160 && (r - g > 50) && (r - b > 50);
+
+              if (!isRedOrColored) {
+                const lum = (r * 299 + g * 587 + b * 114) / 1000;
+                if (lum < 140) return true;  // dark icon = light background
+                if (lum > 180) return false; // light icon = dark background
+              }
             }
           }
         }
 
-        // 2. Check Instagram CSS variable --ig-primary-text
+        // 2. On Instagram Reels views (/reels or /reel/...), the player background is dark by default
+        if (
+          window.location.pathname.startsWith('/reel') ||
+          window.location.pathname.startsWith('/reels') ||
+          window.location.href.includes('/reel/') ||
+          window.location.href.includes('/reels/')
+        ) {
+          return false;
+        }
+
+        // 3. Check Instagram CSS variable --ig-primary-text
         try {
           const rootStyle = window.getComputedStyle(document.documentElement);
           const igText = rootStyle.getPropertyValue('--ig-primary-text').trim();
@@ -228,14 +107,14 @@
           }
         } catch (e) {}
 
-        // 3. Instagram explicit dark class check: _9dls marks dark mode
+        // 4. Instagram explicit dark class check: _9dls marks dark mode
         const hasIgDarkClass = document.documentElement.classList.contains('_9dls') ||
                                document.body?.classList.contains('_9dls');
-        if (!hasIgDarkClass && window.location.hostname.includes('instagram.com')) {
-          return true;
+        if (hasIgDarkClass) {
+          return false;
         }
 
-        // 4. Check body background color
+        // 5. Check body background color
         if (document.body) {
           const bg = window.getComputedStyle(document.body).backgroundColor;
           if (bg && bg.startsWith('rgb')) {
@@ -282,7 +161,7 @@
         if (!hasReelActions) return;
         if (container.querySelectorAll('li, [data-testid*="comment" i]').length > 0) return;
 
-        const isLight = checkIsLightMode(heartBtn);
+        const isLight = checkIsLightMode(heartBtn, container);
 
         // Keep existing speed button's light mode class up to date
         const existingSpeedItem = container.querySelector('.vsc-reel-speed-item');
