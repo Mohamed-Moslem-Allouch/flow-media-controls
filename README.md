@@ -174,10 +174,4 @@ Copyright © 2025 **Mohamed Moslem Allouch**.
 **Mohamed Moslem Allouch**
 - GitHub: [@Mohamed-Moslem-Allouch](https://github.com/Mohamed-Moslem-Allouch)
 - Project: [Flow — Media Controls](https://github.com/Mohamed-Moslem-Allouch/flow-media-controls)
-- Built with: **vibecoding**
-
 ---
-
-<p align="center">
-  <sub>Made by Mohamed Moslem Allouch with vibecoding</sub>
-</p>
