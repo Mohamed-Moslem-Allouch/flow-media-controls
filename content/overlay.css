@@ -1,0 +1,1238 @@
+/* Video Speed Controller - Modern Aero Luminous Floating HUD & In-Video Controls (Zero Motion Blur) */
+
+/* ==========================================================================
+   Movable Floating Controller (Aero Pill Architecture)
+   ========================================================================== */
+
+.vsc-movable-widget {
+  position: fixed !important;
+  z-index: 2147483647 !important;
+  top: 90px;
+  left: 30px;
+  display: inline-flex;
+  flex-direction: column !important;
+  background: #ffffff !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: 1px solid rgba(0, 0, 0, 0.1) !important;
+  border-radius: 999px !important;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.14), 0 1px 4px rgba(0, 0, 0, 0.06) !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+  color: #0f172a !important;
+  padding: 4px 8px !important;
+  gap: 0 !important;
+  width: auto !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+  transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.15s ease,
+              border-color 0.15s ease,
+              opacity 0.15s ease !important;
+  pointer-events: auto !important;
+  opacity: 0.98 !important;
+}
+
+.vsc-movable-widget.vsc-hidden,
+.vsc-movable-widget[hidden] {
+  display: none !important;
+}
+
+.vsc-movable-widget:hover {
+  opacity: 1 !important;
+  border-color: rgba(99, 102, 241, 0.35) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18) !important;
+}
+
+.vsc-movable-widget.vsc-dragging {
+  cursor: grabbing !important;
+  opacity: 1 !important;
+  transform: scale(1.03) !important;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.22) !important;
+  border-color: #6366f1 !important;
+}
+
+/* Minimized State: Featherweight Compact Pill */
+.vsc-movable-widget.vsc-minimized {
+  width: auto !important;
+  padding: 3px 8px !important;
+  border-radius: 999px !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.14) !important;
+}
+
+.vsc-movable-widget.vsc-minimized .vsc-btn-minus,
+.vsc-movable-widget.vsc-minimized .vsc-btn-plus,
+.vsc-movable-widget.vsc-minimized .vsc-timeline-row {
+  display: none !important;
+}
+
+.vsc-movable-widget.vsc-minimized .vsc-speed-badge {
+  padding: 2px 6px !important;
+  margin: 0 2px !important;
+}
+
+/* Primary Bar Row */
+.vsc-bar-row {
+  display: flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  width: 100% !important;
+  cursor: grab !important;
+  height: 28px !important;
+}
+
+/* Drag Grip Handle */
+.vsc-drag-handle {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: grab !important;
+  color: #94a3b8 !important;
+  padding: 2px 4px !important;
+  border-radius: 4px !important;
+  flex-shrink: 0 !important;
+  transition: color 0.15s ease !important;
+}
+
+.vsc-drag-handle:hover {
+  color: #475569 !important;
+}
+
+/* Circular Icon Action Buttons (Steppers & Minimize) */
+.vsc-icon-btn {
+  background: #f1f5f9 !important;
+  border: 1px solid rgba(0, 0, 0, 0.06) !important;
+  color: #334155 !important;
+  cursor: pointer !important;
+  width: 24px !important;
+  height: 24px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 50% !important;
+  transition: all 0.12s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  padding: 0 !important;
+  flex-shrink: 0 !important;
+  outline: none !important;
+}
+
+.vsc-icon-btn:hover {
+  background: #e2e8f0 !important;
+  color: #0f172a !important;
+  transform: scale(1.06) !important;
+}
+
+.vsc-icon-btn:active {
+  transform: scale(0.92) !important;
+  background: #cbd5e1 !important;
+}
+
+/* Core Speed Display Badge */
+.vsc-speed-badge {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  padding: 2px 8px !important;
+  border-radius: 999px !important;
+  background: #f8fafc !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  cursor: ew-resize !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  margin: 0 2px !important;
+  transition: background 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease !important;
+  height: 22px !important;
+  box-sizing: border-box !important;
+}
+
+.vsc-speed-badge:hover {
+  background: #f1f5f9 !important;
+  border-color: rgba(0, 0, 0, 0.14) !important;
+}
+
+.vsc-speed-badge:active:not(.vsc-scrubbing) {
+  transform: scale(0.96) !important;
+}
+
+.vsc-speed-badge.vsc-scrubbing {
+  background: rgba(99, 102, 241, 0.12) !important;
+  border-color: #6366f1 !important;
+  box-shadow: 0 1px 4px rgba(99, 102, 241, 0.25) !important;
+  cursor: ew-resize !important;
+}
+
+.vsc-speed-badge.vsc-scrubbing .vsc-speed-dot {
+  transform: scale(1.3) !important;
+  box-shadow: none !important;
+}
+
+.vsc-speed-dot {
+  width: 5px !important;
+  height: 5px !important;
+  border-radius: 50% !important;
+  background: #6366f1 !important;
+  box-shadow: none !important;
+  flex-shrink: 0 !important;
+}
+
+.vsc-speed-text {
+  font-size: 12px !important;
+  font-weight: 800 !important;
+  font-variant-numeric: tabular-nums !important;
+  letter-spacing: -0.2px !important;
+  color: #0f172a !important;
+  line-height: 1 !important;
+}
+
+/* Optional Micro Timeline */
+.vsc-timeline-row {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 6px !important;
+  padding: 4px 4px 2px !important;
+  border-top: 1px solid rgba(0, 0, 0, 0.06) !important;
+  margin-top: 3px !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.vsc-time-current,
+.vsc-time-duration {
+  font-size: 9px !important;
+  font-weight: 600 !important;
+  color: #64748b !important;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", monospace !important;
+  letter-spacing: -0.2px !important;
+  min-width: 22px !important;
+}
+
+.vsc-time-current {
+  text-align: right !important;
+}
+
+.vsc-time-duration {
+  text-align: left !important;
+}
+
+.vsc-timeline-track {
+  flex: 1 !important;
+  height: 3px !important;
+  background: #e2e8f0 !important;
+  border-radius: 2px !important;
+  position: relative !important;
+  cursor: pointer !important;
+  overflow: visible !important;
+  transition: height 0.15s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.vsc-timeline-track:hover {
+  height: 5px !important;
+}
+
+.vsc-timeline-fill {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  bottom: 0 !important;
+  width: 0%;
+  background: #6366f1 !important;
+  border-radius: 2px !important;
+  pointer-events: none !important;
+}
+
+.vsc-timeline-thumb {
+  position: absolute !important;
+  top: 50% !important;
+  left: 0%;
+  width: 8px !important;
+  height: 8px !important;
+  border-radius: 50% !important;
+  background: #ffffff !important;
+  transform: translate(-50%, -50%) !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35) !important;
+  pointer-events: none !important;
+  opacity: 0 !important;
+  transition: opacity 0.12s ease !important;
+}
+
+.vsc-timeline-track:hover .vsc-timeline-thumb {
+  opacity: 1 !important;
+}
+
+.vsc-movable-widget.vsc-no-timeline .vsc-timeline-row {
+  display: none !important;
+}
+
+/* ==========================================================================
+   In-Video Live Timeline Scrubber Bar (Zero Motion Blur, Crisp & Visible)
+   ========================================================================== */
+
+.vsc-invideo-container {
+  position: absolute !important;
+  bottom: 4px !important;
+  top: auto !important;
+  left: 0 !important;
+  right: 0 !important;
+  width: 100% !important;
+  z-index: 2147483647 !important;
+  pointer-events: none !important;
+  touch-action: auto !important;
+  display: flex !important;
+  flex-direction: column !important;
+  padding: 4px 12px !important;
+  background: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  box-shadow: none !important;
+  border: none !important;
+  margin: 0 !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  box-sizing: border-box !important;
+  opacity: 1 !important;
+  isolation: isolate !important;
+  mix-blend-mode: normal !important;
+  filter: none !important;
+  overflow: visible !important;
+  transition: opacity 0.15s ease, bottom 0.15s ease !important;
+}
+
+/* Stories positioning */
+.vsc-invideo-container.vsc-is-ig-story {
+  bottom: 86px !important;
+  padding: 6px 16px !important;
+}
+
+.vsc-invideo-container.vsc-is-fb-story {
+  bottom: 6px !important;
+  padding: 6px 14px !important;
+}
+
+.vsc-invideo-container.vsc-is-story:not(.vsc-is-fb-story) {
+  bottom: 86px !important;
+  padding: 6px 16px !important;
+}
+
+/* Reels & Feed positioning & radiant high-visibility brightness (Zero Murkiness, Crisp and Luminous) */
+.vsc-invideo-container.vsc-is-reel,
+.vsc-invideo-container.vsc-is-feed,
+.vsc-invideo-container:not(.vsc-is-story) {
+  bottom: 4px !important;
+  padding: 4px 12px !important;
+  opacity: 1 !important;
+  z-index: 2147483647 !important;
+  isolation: isolate !important;
+}
+
+.vsc-invideo-container.vsc-is-reel .vsc-invideo-play-btn,
+.vsc-invideo-container.vsc-is-reel .vsc-invideo-volume-btn,
+.vsc-invideo-container:not(.vsc-is-story) .vsc-invideo-play-btn,
+.vsc-invideo-container:not(.vsc-is-story) .vsc-invideo-volume-btn {
+  background: rgba(18, 20, 26, 0.82) !important;
+  color: #f8fafc !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4) !important;
+  opacity: 1 !important;
+}
+
+.vsc-invideo-container.vsc-is-reel .vsc-invideo-play-btn:hover,
+.vsc-invideo-container.vsc-is-reel .vsc-invideo-volume-btn:hover,
+.vsc-invideo-container:not(.vsc-is-story) .vsc-invideo-play-btn:hover,
+.vsc-invideo-container:not(.vsc-is-story) .vsc-invideo-volume-btn:hover {
+  background: rgba(30, 35, 45, 0.95) !important;
+  border-color: rgba(255, 255, 255, 0.35) !important;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.45) !important;
+  color: #ffffff !important;
+}
+
+.vsc-invideo-container.vsc-is-reel .vsc-invideo-track,
+.vsc-invideo-container:not(.vsc-is-story) .vsc-invideo-track {
+  background: rgba(255, 255, 255, 0.24) !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3) !important;
+}
+
+.vsc-invideo-container.vsc-is-reel:hover .vsc-invideo-track,
+.vsc-invideo-container.vsc-is-reel.vsc-scrubbing-active .vsc-invideo-track,
+.vsc-invideo-container:not(.vsc-is-story):hover .vsc-invideo-track,
+.vsc-invideo-container:not(.vsc-is-story).vsc-scrubbing-active .vsc-invideo-track {
+  background: rgba(255, 255, 255, 0.38) !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35) !important;
+}
+
+.vsc-invideo-container.vsc-is-reel .vsc-invideo-progress,
+.vsc-invideo-container:not(.vsc-is-story) .vsc-invideo-progress {
+  background: #6366f1 !important;
+  box-shadow: none !important;
+}
+
+.vsc-invideo-container.vsc-is-reel .vsc-invideo-thumb,
+.vsc-invideo-container:not(.vsc-is-story) .vsc-invideo-thumb {
+  background: #ffffff !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35) !important;
+  opacity: 1 !important;
+}
+
+.vsc-invideo-container.vsc-is-reel .vsc-invideo-time-display,
+.vsc-invideo-container:not(.vsc-is-story) .vsc-invideo-time-display {
+  background: rgba(18, 20, 26, 0.8) !important;
+  color: #f1f5f9 !important;
+  border: 1px solid rgba(255, 255, 255, 0.16) !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35) !important;
+  opacity: 1 !important;
+}
+
+/* Instagram Reels: Force dark gradient scrims to stay behind in-video controls */
+article ._aato,
+article div[style*="linear-gradient"],
+.PolarisPostVideoPlayerWrapper ._aato,
+.PolarisPostVideoPlayerWrapper div[style*="linear-gradient"],
+div[data-visualcompletion="media-vc-image"] ~ div[style*="linear-gradient"],
+div[data-visualcompletion="media-vc-image"] ._aato,
+div[style*="linear-gradient(rgba(0, 0, 0, 0)"],
+div[style*="linear-gradient(to top"] {
+  z-index: 1 !important;
+  pointer-events: none !important;
+}
+
+.vsc-invideo-container:hover,
+.vsc-invideo-container.vsc-scrubbing-active {
+  opacity: 1 !important;
+}
+
+/* Flex Row containing Play Btn + Track + Time Display + Volume */
+.vsc-invideo-row {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  width: 100% !important;
+  pointer-events: none !important;
+  overflow: visible !important;
+  box-sizing: border-box !important;
+}
+
+/* On non-story videos (Reels & Feed): leave 58px corner for native speaker/unmute icon */
+.vsc-invideo-container:not(.vsc-is-story) .vsc-invideo-row {
+  width: calc(100% - 58px) !important;
+  max-width: calc(100% - 58px) !important;
+  margin-right: auto !important;
+}
+
+/* Generous Touch/Click Scrubber Hit Box */
+.vsc-invideo-bar-wrap {
+  flex: 1 1 auto !important;
+  min-width: 80px !important;
+  position: relative !important;
+  width: auto !important;
+  padding: 10px 0 !important;
+  cursor: pointer !important;
+  pointer-events: auto !important;
+  touch-action: none !important;
+  background: transparent !important;
+  overflow: visible !important;
+  box-sizing: border-box !important;
+}
+
+/* Track Line */
+.vsc-invideo-track {
+  position: relative !important;
+  width: 100% !important;
+  min-width: 60px !important;
+  height: 3px !important;
+  background: rgba(255, 255, 255, 0.28) !important;
+  border-radius: 2px !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3) !important;
+  transition: height 0.12s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.12s ease !important;
+  overflow: visible !important;
+  cursor: pointer !important;
+  box-sizing: border-box !important;
+}
+
+.vsc-invideo-container:hover .vsc-invideo-track,
+.vsc-invideo-container.vsc-scrubbing-active .vsc-invideo-track {
+  height: 5px !important;
+  background: rgba(255, 255, 255, 0.42) !important;
+}
+
+/* Progress Fill (Subtle Accent, No Radiant Bloom) */
+.vsc-invideo-progress {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  bottom: 0 !important;
+  width: 0%;
+  border-radius: 2px !important;
+  background: #6366f1 !important;
+  box-shadow: none !important;
+  pointer-events: none !important;
+  transition: width 0.04s linear !important;
+}
+
+.vsc-invideo-container.vsc-scrubbing-active .vsc-invideo-progress {
+  transition: none !important;
+}
+
+/* Scrubber Thumb */
+.vsc-invideo-thumb {
+  position: absolute !important;
+  top: 50% !important;
+  left: 0%;
+  width: 11px !important;
+  height: 11px !important;
+  border-radius: 50% !important;
+  background: #ffffff !important;
+  transform: translate(-50%, -50%) !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4) !important;
+  pointer-events: none !important;
+  opacity: 1 !important;
+  transition: transform 0.12s ease !important;
+}
+
+.vsc-invideo-container:hover .vsc-invideo-thumb,
+.vsc-invideo-container.vsc-scrubbing-active .vsc-invideo-thumb {
+  transform: translate(-50%, -50%) scale(1.25) !important;
+}
+
+/* Floating Hover & Drag Time Bubble */
+.vsc-invideo-time-bubble {
+  position: absolute !important;
+  bottom: 24px !important;
+  left: 0%;
+  transform: translateX(-50%) !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  height: 22px !important;
+  line-height: 16px !important;
+  box-sizing: border-box !important;
+  background: rgba(15, 20, 28, 0.9) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.18) !important;
+  border-radius: 6px !important;
+  color: #ffffff !important;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  padding: 2px 7px !important;
+  white-space: nowrap !important;
+  pointer-events: none !important;
+  opacity: 0 !important;
+  transition: opacity 0.12s ease !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35) !important;
+  z-index: 2147483647 !important;
+  overflow: visible !important;
+}
+
+.vsc-invideo-container.vsc-scrubbing-active .vsc-invideo-time-bubble {
+  opacity: 1 !important;
+}
+
+/* Permanent Time Display to the Right */
+.vsc-invideo-time-display {
+  flex-shrink: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  font-variant-numeric: tabular-nums !important;
+  color: #f1f5f9 !important;
+  letter-spacing: 0.2px !important;
+  padding: 2px 8px !important;
+  background: rgba(18, 20, 26, 0.82) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.16) !important;
+  border-radius: 999px !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35) !important;
+  white-space: nowrap !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  pointer-events: none !important;
+  line-height: 16px !important;
+  opacity: 1 !important;
+  transition: transform 0.15s ease !important;
+}
+
+.vsc-invideo-container:hover .vsc-invideo-time-display,
+.vsc-invideo-container.vsc-scrubbing-active .vsc-invideo-time-display {
+  transform: scale(1.02) !important;
+}
+
+/* ==========================================================================
+   In-Video Scrubber Controls (YouTube-Style Play/Pause & Timeline)
+   ========================================================================== */
+
+.vsc-invideo-bar-wrap,
+.vsc-invideo-track,
+.vsc-invideo-play-btn,
+.vsc-invideo-volume-wrap,
+.vsc-invideo-volume-btn,
+.vsc-invideo-volume-slider,
+.vsc-invideo-volume-track {
+  pointer-events: auto !important;
+}
+
+/* In-Video YouTube-Style Play/Pause Button */
+.vsc-invideo-play-btn {
+  position: relative !important;
+  z-index: 2147483647 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 28px !important;
+  height: 28px !important;
+  border-radius: 50% !important;
+  background: rgba(18, 20, 26, 0.82) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35) !important;
+  color: #f8fafc !important;
+  cursor: pointer !important;
+  pointer-events: auto !important;
+  flex-shrink: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  outline: none !important;
+  line-height: 1 !important;
+  box-sizing: border-box !important;
+  transition: transform 0.12s ease, background-color 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+}
+
+.vsc-invideo-play-btn:hover {
+  transform: scale(1.08) !important;
+  background: rgba(30, 35, 45, 0.95) !important;
+  border-color: rgba(255, 255, 255, 0.38) !important;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.45) !important;
+  color: #ffffff !important;
+}
+
+.vsc-invideo-play-btn:active {
+  transform: scale(0.92) !important;
+}
+
+.vsc-invideo-play-btn svg {
+  pointer-events: none !important;
+  flex-shrink: 0 !important;
+}
+
+.vsc-invideo-play-btn .vsc-invideo-icon-play {
+  display: block !important;
+  margin-left: 2px !important;
+}
+
+.vsc-invideo-play-btn .vsc-invideo-icon-pause {
+  display: none !important;
+}
+
+.vsc-invideo-play-btn.vsc-playing .vsc-invideo-icon-play {
+  display: none !important;
+}
+
+.vsc-invideo-play-btn.vsc-playing .vsc-invideo-icon-pause {
+  display: block !important;
+  margin-left: 0 !important;
+}
+
+/* ==========================================================================
+   In-Video Audio Volume Capsule Controller (Facebook Stories, beside 0:00 / 2:43)
+   ========================================================================== */
+
+.vsc-invideo-volume-wrap {
+  position: relative !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-shrink: 0 !important;
+  pointer-events: auto !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  padding-top: 14px !important;
+  margin-top: -14px !important;
+  cursor: pointer !important;
+}
+
+/* Circular Bottom Speaker Button in Timeline Row */
+.vsc-invideo-volume-btn {
+  position: relative !important;
+  z-index: 2147483647 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 28px !important;
+  height: 28px !important;
+  border-radius: 50% !important;
+  background: rgba(18, 20, 26, 0.82) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35) !important;
+  color: #f8fafc !important;
+  cursor: pointer !important;
+  pointer-events: auto !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  outline: none !important;
+  line-height: 1 !important;
+  box-sizing: border-box !important;
+  transition: transform 0.12s ease, background-color 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease !important;
+}
+
+.vsc-invideo-volume-btn:hover {
+  transform: scale(1.08) !important;
+  background: rgba(30, 35, 45, 0.95) !important;
+  border-color: rgba(255, 255, 255, 0.38) !important;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.45) !important;
+  color: #ffffff !important;
+}
+
+.vsc-invideo-volume-btn:active {
+  transform: scale(0.92) !important;
+}
+
+.vsc-invideo-volume-btn svg {
+  pointer-events: none !important;
+  flex-shrink: 0 !important;
+}
+
+.vsc-invideo-volume-wrap.vsc-muted .vsc-invideo-icon-vol-high {
+  display: none !important;
+}
+
+.vsc-invideo-volume-wrap.vsc-muted .vsc-invideo-icon-vol-mute {
+  display: block !important;
+}
+
+.vsc-invideo-volume-wrap:not(.vsc-muted) .vsc-invideo-icon-vol-high {
+  display: block !important;
+}
+
+.vsc-invideo-volume-wrap:not(.vsc-muted) .vsc-invideo-icon-vol-mute {
+  display: none !important;
+}
+
+/* Vertical Volume Slider Capsule Popup (Exact Instagram Match) */
+.vsc-invideo-volume-popup {
+  position: absolute !important;
+  bottom: 30px !important;
+  left: 50% !important;
+  transform: translateX(-50%) translateY(4px) scale(0.95) !important;
+  transform-origin: bottom center !important;
+  width: 32px !important;
+  height: 124px !important;
+  border-radius: 999px !important;
+  background: rgba(24, 24, 24, 0.94) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 14px 0 !important;
+  box-sizing: border-box !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transition: opacity 0.16s cubic-bezier(0.16, 1, 0.3, 1), transform 0.16s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  z-index: 2147483647 !important;
+  cursor: pointer !important;
+}
+
+/* Invisible Hit Bridge: Bridges space between popup and button so cursor never loses hover */
+.vsc-invideo-volume-popup::after {
+  content: '' !important;
+  position: absolute !important;
+  bottom: -18px !important;
+  left: -12px !important;
+  right: -12px !important;
+  height: 24px !important;
+  background: transparent !important;
+  pointer-events: auto !important;
+}
+
+.vsc-invideo-volume-wrap:hover .vsc-invideo-volume-popup,
+.vsc-invideo-volume-wrap.vsc-volume-active .vsc-invideo-volume-popup {
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  transform: translateX(-50%) translateY(0) scale(1) !important;
+}
+
+.vsc-invideo-volume-slider {
+  width: 100% !important;
+  height: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-sizing: border-box !important;
+  cursor: pointer !important;
+  pointer-events: auto !important;
+}
+
+.vsc-invideo-volume-track {
+  position: relative !important;
+  width: 4px !important;
+  height: 96px !important;
+  background: rgba(255, 255, 255, 0.35) !important;
+  border-radius: 2px !important;
+  overflow: visible !important;
+  cursor: pointer !important;
+  pointer-events: auto !important;
+}
+
+.vsc-invideo-volume-fill {
+  position: absolute !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  height: 80%;
+  background: #ffffff !important;
+  border-radius: 2px !important;
+  pointer-events: none !important;
+}
+
+.vsc-invideo-volume-thumb {
+  position: absolute !important;
+  left: 50% !important;
+  bottom: 80%;
+  transform: translate(-50%, 50%) !important;
+  width: 14px !important;
+  height: 14px !important;
+  border-radius: 50% !important;
+  background: #ffffff !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.45) !important;
+  pointer-events: none !important;
+  transition: transform 0.1s ease !important;
+}
+
+.vsc-invideo-volume-wrap:hover .vsc-invideo-volume-thumb,
+.vsc-invideo-volume-wrap.vsc-volume-active .vsc-invideo-volume-thumb {
+  transform: translate(-50%, 50%) scale(1.15) !important;
+}
+
+/* Interactive cursor for video playback toggle */
+article video,
+.PolarisPostVideoPlayerWrapper video,
+div[role="presentation"] video {
+  cursor: pointer !important;
+}
+
+/* ==========================================================================
+   Facebook Stories Vertical Volume Capsule (Exact Instagram Match)
+   ========================================================================== */
+
+.vsc-fb-volume-capsule {
+  position: absolute !important;
+  top: 70px !important;
+  right: 18px !important;
+  z-index: 2147483647 !important;
+  width: 34px !important;
+  height: 34px !important;
+  border-radius: 999px !important;
+  background: rgba(26, 26, 26, 0.82) !important;
+  backdrop-filter: blur(10px) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.16) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  padding: 4px 0 !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+  transition: height 0.22s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.2s ease, box-shadow 0.2s ease !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  pointer-events: auto !important;
+  opacity: 0.92 !important;
+}
+
+.vsc-fb-volume-capsule:hover,
+.vsc-fb-volume-capsule.vsc-expanded,
+.vsc-fb-volume-capsule.vsc-dragging {
+  height: 136px !important;
+  background: rgba(24, 24, 24, 0.92) !important;
+  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.6) !important;
+  opacity: 1 !important;
+}
+
+/* Vertical Slider Wrap */
+.vsc-fb-volume-slider-wrap {
+  width: 100% !important;
+  flex: 1 1 auto !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transition: opacity 0.18s ease !important;
+  cursor: pointer !important;
+  padding: 10px 0 6px !important;
+  box-sizing: border-box !important;
+}
+
+.vsc-fb-volume-capsule:hover .vsc-fb-volume-slider-wrap,
+.vsc-fb-volume-capsule.vsc-expanded .vsc-fb-volume-slider-wrap,
+.vsc-fb-volume-capsule.vsc-dragging .vsc-fb-volume-slider-wrap {
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
+
+/* Vertical Track */
+.vsc-fb-volume-track {
+  position: relative !important;
+  width: 4px !important;
+  height: 76px !important;
+  background: rgba(255, 255, 255, 0.32) !important;
+  border-radius: 2px !important;
+  overflow: visible !important;
+}
+
+/* Vertical Fill (from bottom up) */
+.vsc-fb-volume-fill {
+  position: absolute !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  height: 80%;
+  background: #ffffff !important;
+  border-radius: 2px !important;
+  pointer-events: none !important;
+}
+
+/* Circular Thumb */
+.vsc-fb-volume-thumb {
+  position: absolute !important;
+  left: 50% !important;
+  bottom: 80%;
+  transform: translate(-50%, 50%) !important;
+  width: 14px !important;
+  height: 14px !important;
+  border-radius: 50% !important;
+  background: #ffffff !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.45) !important;
+  pointer-events: none !important;
+  transition: transform 0.1s ease !important;
+}
+
+.vsc-fb-volume-capsule:hover .vsc-fb-volume-thumb,
+.vsc-fb-volume-capsule.vsc-dragging .vsc-fb-volume-thumb {
+  transform: translate(-50%, 50%) scale(1.15) !important;
+}
+
+/* Bottom Speaker Button */
+.vsc-fb-volume-btn {
+  width: 26px !important;
+  height: 26px !important;
+  background: transparent !important;
+  border: none !important;
+  color: #ffffff !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  outline: none !important;
+  flex-shrink: 0 !important;
+  border-radius: 50% !important;
+  transition: transform 0.12s ease !important;
+}
+
+.vsc-fb-volume-btn:hover {
+  transform: scale(1.12) !important;
+}
+
+.vsc-fb-volume-btn:active {
+  transform: scale(0.92) !important;
+}
+
+.vsc-fb-volume-btn svg {
+  pointer-events: none !important;
+  flex-shrink: 0 !important;
+}
+
+.vsc-fb-volume-capsule.vsc-muted .vsc-fb-icon-volume-high {
+  display: none !important;
+}
+
+.vsc-fb-volume-capsule.vsc-muted .vsc-fb-icon-volume-mute {
+  display: block !important;
+}
+
+.vsc-fb-volume-capsule:not(.vsc-muted) .vsc-fb-icon-volume-high {
+  display: block !important;
+}
+
+.vsc-fb-volume-capsule:not(.vsc-muted) .vsc-fb-icon-volume-mute {
+  display: none !important;
+}
+
+/* ==========================================================================
+   Instagram Reels: Action Bar Speed Up Button (Matches Native Column)
+   ========================================================================== */
+
+.vsc-reel-speed-item {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin-bottom: 16px !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  pointer-events: auto !important;
+  cursor: pointer !important;
+  z-index: 99 !important;
+  position: relative !important;
+}
+
+.vsc-reel-speed-btn {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 44px !important;
+  height: 44px !important;
+  border-radius: 50% !important;
+  background: rgba(255, 255, 255, 0.16) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.22) !important;
+  color: #ffffff !important;
+  cursor: pointer !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  outline: none !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45) !important;
+  transition: transform 0.14s cubic-bezier(0.16, 1, 0.3, 1),
+              background-color 0.14s ease,
+              border-color 0.14s ease,
+              box-shadow 0.14s ease !important;
+}
+
+.vsc-reel-speed-btn:hover {
+  transform: scale(1.1) !important;
+  background: rgba(255, 255, 255, 0.28) !important;
+  border-color: rgba(255, 255, 255, 0.5) !important;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.55) !important;
+}
+
+.vsc-reel-speed-btn:active {
+  transform: scale(0.92) !important;
+  background: rgba(255, 255, 255, 0.38) !important;
+}
+
+.vsc-reel-speed-icon-box {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 24px !important;
+  height: 24px !important;
+  pointer-events: none !important;
+}
+
+.vsc-reel-speed-icon-box svg {
+  width: 22px !important;
+  height: 22px !important;
+  fill: currentColor !important;
+  pointer-events: none !important;
+}
+
+.vsc-reel-speed-label {
+  display: block !important;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  color: #ffffff !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7) !important;
+  margin-top: 4px !important;
+  text-align: center !important;
+  letter-spacing: 0.2px !important;
+  line-height: 1.2 !important;
+  pointer-events: none !important;
+}
+
+/* Light Mode Adaptation for Reels Speed Up Action (White Mode Support) */
+.vsc-reel-speed-item.vsc-is-light-mode .vsc-reel-speed-btn,
+:root.vsc-theme-light .vsc-reel-speed-btn,
+:root[data-vsc-theme="light"] .vsc-reel-speed-btn,
+:root:not(._9dls) .vsc-reel-speed-item.vsc-is-light-mode .vsc-reel-speed-btn {
+  background: rgba(0, 0, 0, 0.06) !important;
+  border: 1px solid rgba(0, 0, 0, 0.14) !important;
+  color: #18191a !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08) !important;
+}
+
+.vsc-reel-speed-item.vsc-is-light-mode .vsc-reel-speed-btn:hover,
+:root.vsc-theme-light .vsc-reel-speed-btn:hover,
+:root[data-vsc-theme="light"] .vsc-reel-speed-btn:hover,
+:root:not(._9dls) .vsc-reel-speed-item.vsc-is-light-mode .vsc-reel-speed-btn:hover {
+  background: rgba(0, 0, 0, 0.12) !important;
+  border-color: rgba(0, 0, 0, 0.24) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.14) !important;
+  color: #000000 !important;
+}
+
+.vsc-reel-speed-item.vsc-is-light-mode .vsc-reel-speed-btn:active,
+:root.vsc-theme-light .vsc-reel-speed-btn:active,
+:root[data-vsc-theme="light"] .vsc-reel-speed-btn:active {
+  background: rgba(0, 0, 0, 0.18) !important;
+}
+
+.vsc-reel-speed-item.vsc-is-light-mode .vsc-reel-speed-label,
+:root.vsc-theme-light .vsc-reel-speed-label,
+:root[data-vsc-theme="light"] .vsc-reel-speed-label,
+:root:not(._9dls) .vsc-reel-speed-item.vsc-is-light-mode .vsc-reel-speed-label {
+  color: #18191a !important;
+  text-shadow: none !important;
+}
+
+/* ==========================================================================
+   Adaptive Theme Appearance (Dark / Light Platform Matching)
+   ========================================================================== */
+
+:root.vsc-theme-dark .vsc-movable-widget,
+:root[data-vsc-theme="dark"] .vsc-movable-widget,
+[data-vsc-theme="dark"] .vsc-movable-widget {
+  background: rgba(22, 27, 34, 0.96) !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 2px 6px rgba(0, 0, 0, 0.3) !important;
+  color: #f0f6fc !important;
+}
+
+:root.vsc-theme-dark .vsc-movable-widget .vsc-drag-handle,
+:root[data-vsc-theme="dark"] .vsc-movable-widget .vsc-drag-handle,
+[data-vsc-theme="dark"] .vsc-movable-widget .vsc-drag-handle {
+  color: #8b949e !important;
+}
+
+:root.vsc-theme-dark .vsc-movable-widget .vsc-drag-handle:hover,
+:root[data-vsc-theme="dark"] .vsc-movable-widget .vsc-drag-handle:hover,
+[data-vsc-theme="dark"] .vsc-movable-widget .vsc-drag-handle:hover {
+  color: #f0f6fc !important;
+}
+
+:root.vsc-theme-dark .vsc-movable-widget .vsc-icon-btn,
+:root[data-vsc-theme="dark"] .vsc-movable-widget .vsc-icon-btn,
+[data-vsc-theme="dark"] .vsc-movable-widget .vsc-icon-btn {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #f0f6fc !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+:root.vsc-theme-dark .vsc-movable-widget .vsc-icon-btn:hover,
+:root[data-vsc-theme="dark"] .vsc-movable-widget .vsc-icon-btn:hover,
+[data-vsc-theme="dark"] .vsc-movable-widget .vsc-icon-btn:hover {
+  background: rgba(255, 255, 255, 0.16) !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+:root.vsc-theme-dark .vsc-movable-widget .vsc-speed-badge,
+:root[data-vsc-theme="dark"] .vsc-movable-widget .vsc-speed-badge,
+[data-vsc-theme="dark"] .vsc-movable-widget .vsc-speed-badge {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+}
+
+:root.vsc-theme-dark .vsc-movable-widget .vsc-speed-text,
+:root[data-vsc-theme="dark"] .vsc-movable-widget .vsc-speed-text,
+[data-vsc-theme="dark"] .vsc-movable-widget .vsc-speed-text {
+  color: #f0f6fc !important;
+}
+
+:root.vsc-theme-dark .vsc-movable-widget .vsc-timeline-row,
+:root[data-vsc-theme="dark"] .vsc-movable-widget .vsc-timeline-row,
+[data-vsc-theme="dark"] .vsc-movable-widget .vsc-timeline-row {
+  border-top-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+:root.vsc-theme-dark .vsc-movable-widget .vsc-timeline-track,
+:root[data-vsc-theme="dark"] .vsc-movable-widget .vsc-timeline-track,
+[data-vsc-theme="dark"] .vsc-movable-widget .vsc-timeline-track {
+  background: rgba(255, 255, 255, 0.16) !important;
+}
+
+:root.vsc-theme-dark .vsc-movable-widget .vsc-time-current,
+:root.vsc-theme-dark .vsc-movable-widget .vsc-time-duration,
+:root[data-vsc-theme="dark"] .vsc-movable-widget .vsc-time-current,
+:root[data-vsc-theme="dark"] .vsc-movable-widget .vsc-time-duration,
+[data-vsc-theme="dark"] .vsc-movable-widget .vsc-time-current,
+[data-vsc-theme="dark"] .vsc-movable-widget .vsc-time-duration {
+  color: #8b949e !important;
+}
+
+:root.vsc-theme-dark .vsc-invideo-time-display,
+:root[data-vsc-theme="dark"] .vsc-invideo-time-display,
+[data-vsc-theme="dark"] .vsc-invideo-time-display {
+  background: rgba(18, 20, 26, 0.92) !important;
+  color: #f0f6fc !important;
+  border: 1px solid rgba(255, 255, 255, 0.18) !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5) !important;
+}
+
+:root.vsc-theme-dark .vsc-invideo-time-bubble,
+:root[data-vsc-theme="dark"] .vsc-invideo-time-bubble,
+[data-vsc-theme="dark"] .vsc-invideo-time-bubble {
+  background: rgba(18, 20, 26, 0.95) !important;
+  color: #f0f6fc !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.6) !important;
+}
+
+/* System dark mode fallback when not explicitly forced to light */
+@media (prefers-color-scheme: dark) {
+  :root:not(.vsc-theme-light):not([data-vsc-theme="light"]) .vsc-movable-widget {
+    background: rgba(22, 27, 34, 0.96) !important;
+    border: 1px solid rgba(255, 255, 255, 0.14) !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 2px 6px rgba(0, 0, 0, 0.3) !important;
+    color: #f0f6fc !important;
+  }
+  :root:not(.vsc-theme-light):not([data-vsc-theme="light"]) .vsc-movable-widget .vsc-drag-handle {
+    color: #8b949e !important;
+  }
+  :root:not(.vsc-theme-light):not([data-vsc-theme="light"]) .vsc-movable-widget .vsc-drag-handle:hover {
+    color: #f0f6fc !important;
+  }
+  :root:not(.vsc-theme-light):not([data-vsc-theme="light"]) .vsc-movable-widget .vsc-icon-btn {
+    background: rgba(255, 255, 255, 0.08) !important;
+    color: #f0f6fc !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  }
+  :root:not(.vsc-theme-light):not([data-vsc-theme="light"]) .vsc-movable-widget .vsc-icon-btn:hover {
+    background: rgba(255, 255, 255, 0.16) !important;
+    border-color: rgba(255, 255, 255, 0.2) !important;
+  }
+  :root:not(.vsc-theme-light):not([data-vsc-theme="light"]) .vsc-movable-widget .vsc-speed-badge {
+    background: rgba(255, 255, 255, 0.08) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  }
+  :root:not(.vsc-theme-light):not([data-vsc-theme="light"]) .vsc-movable-widget .vsc-speed-text {
+    color: #f0f6fc !important;
+  }
+  :root:not(.vsc-theme-light):not([data-vsc-theme="light"]) .vsc-movable-widget .vsc-timeline-row {
+    border-top-color: rgba(255, 255, 255, 0.08) !important;
+  }
+  :root:not(.vsc-theme-light):not([data-vsc-theme="light"]) .vsc-movable-widget .vsc-timeline-track {
+    background: rgba(255, 255, 255, 0.16) !important;
+  }
+  :root:not(.vsc-theme-light):not([data-vsc-theme="light"]) .vsc-movable-widget .vsc-time-current,
+  :root:not(.vsc-theme-light):not([data-vsc-theme="light"]) .vsc-movable-widget .vsc-time-duration {
+    color: #8b949e !important;
+  }
+  :root:not(.vsc-theme-light):not([data-vsc-theme="light"]) .vsc-invideo-time-display {
+    background: rgba(18, 20, 26, 0.92) !important;
+    color: #f0f6fc !important;
+    border: 1px solid rgba(255, 255, 255, 0.18) !important;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5) !important;
+  }
+  :root:not(.vsc-theme-light):not([data-vsc-theme="light"]) .vsc-invideo-time-bubble {
+    background: rgba(18, 20, 26, 0.95) !important;
+    color: #f0f6fc !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.6) !important;
+  }
+}

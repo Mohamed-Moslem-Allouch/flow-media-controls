@@ -1,0 +1,30 @@
+{
+  "name": "flow-media-controls",
+  "version": "1.1.0",
+  "description": "Precise timeline scrubbers, story audio controls, and playback tools for Instagram and Facebook.",
+  "author": "Mohamed Moslem Allouch",
+  "license": "MIT",
+  "homepage": "https://github.com/Mohamed-Moslem-Allouch/flow-media-controls#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Mohamed-Moslem-Allouch/flow-media-controls.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Mohamed-Moslem-Allouch/flow-media-controls/issues"
+  },
+  "keywords": [
+    "chrome-extension",
+    "browser-extension",
+    "instagram",
+    "facebook",
+    "reels",
+    "stories",
+    "media-controls",
+    "video-player",
+    "timeline-scrubber",
+    "manifest-v3"
+  ],
+  "scripts": {
+    "lint": "node --check background/service-worker.js content/*.js popup/*.js"
+  }
+}

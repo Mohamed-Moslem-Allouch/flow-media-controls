@@ -1,0 +1,73 @@
+{
+  "manifest_version": 3,
+  "name": "Flow — Media Controls for Instagram & Facebook",
+  "version": "1.1.0",
+  "description": "Precise timeline scrubbers, story audio controls, and playback tools for Instagram and Facebook.",
+  "author": "Mohamed Moslem Allouch",
+  "icons": {
+    "16": "icons/icon-16.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
+  "permissions": [
+    "storage",
+    "tabs"
+  ],
+  "host_permissions": [
+    "*://*.instagram.com/*",
+    "*://*.facebook.com/*"
+  ],
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_title": "Flow Media Controls",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "48": "icons/icon-48.png",
+      "128": "icons/icon-128.png"
+    }
+  },
+  "background": {
+    "service_worker": "background/service-worker.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://*.instagram.com/*",
+        "*://*.facebook.com/*"
+      ],
+      "js": [
+        "content/page-bridge.js"
+      ],
+      "world": "MAIN",
+      "run_at": "document_start"
+    },
+    {
+      "matches": [
+        "*://*.instagram.com/*"
+      ],
+      "js": [
+        "content/instagram-features.js",
+        "content/in-video-scrubber.js",
+        "content/movable-widget.js",
+        "content/core-speed-engine.js"
+      ],
+      "css": [
+        "content/overlay.css"
+      ]
+    },
+    {
+      "matches": [
+        "*://*.facebook.com/*"
+      ],
+      "js": [
+        "content/facebook-features.js",
+        "content/in-video-scrubber.js",
+        "content/movable-widget.js",
+        "content/core-speed-engine.js"
+      ],
+      "css": [
+        "content/overlay.css"
+      ]
+    }
+  ]
+}

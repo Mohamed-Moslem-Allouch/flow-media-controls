@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="auto">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Flow Media Controls</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="app-shell">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="brand-cluster">
+        <div class="brand-mark" aria-hidden="true">
+          <img class="brand-img" src="../icons/icon-48.png" alt="Flow Icon" width="28" height="28">
+        </div>
+        <div class="brand-info">
+          <h1 class="brand-title">Flow</h1>
+          <span class="brand-tagline">Media Controls</span>
+        </div>
+      </div>
+
+      <div class="header-utilities">
+        <!-- Theme Segmented Control -->
+        <div class="theme-switch-pill" id="themeToggleGroup" role="radiogroup" aria-label="Appearance Theme">
+          <button class="theme-seg-btn active" data-theme="auto" type="button" role="radio" aria-checked="true" title="Auto (Match system & page)">
+            <svg class="seg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="3" width="20" height="14" rx="2"/>
+              <line x1="8" y1="21" x2="16" y2="21"/>
+              <line x1="12" y1="17" x2="12" y2="21"/>
+            </svg>
+          </button>
+          <button class="theme-seg-btn" data-theme="light" type="button" role="radio" aria-checked="false" title="Light theme">
+            <svg class="seg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="4"/>
+              <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>
+            </svg>
+          </button>
+          <button class="theme-seg-btn" data-theme="dark" type="button" role="radio" aria-checked="false" title="Dark theme">
+            <svg class="seg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Dynamic Context Status Pill -->
+        <div id="statusBadge" class="status-indicator">
+          <span class="status-pulse-dot" aria-hidden="true"></span>
+          <span class="status-text">Standby</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Platform Segmented Navigation -->
+    <nav class="nav-segment" role="tablist" aria-label="Feature Views">
+      <button class="nav-tab active" id="tabInstagram" data-tab="instagram" role="tab" aria-selected="true" aria-controls="panelInstagram" type="button">
+        <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+          <rect width="20" height="20" x="2" y="2" rx="5" ry="5"/>
+          <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
+          <line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/>
+        </svg>
+        <span>Instagram</span>
+      </button>
+
+      <button class="nav-tab" id="tabFacebook" data-tab="facebook" role="tab" aria-selected="false" aria-controls="panelFacebook" type="button">
+        <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/>
+        </svg>
+        <span>Facebook</span>
+      </button>
+
+      <button class="nav-tab" id="tabGeneral" data-tab="general" role="tab" aria-selected="false" aria-controls="panelGeneral" type="button">
+        <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/>
+          <circle cx="12" cy="12" r="3"/>
+        </svg>
+        <span>Preferences</span>
+      </button>
+    </nav>
+
+    <!-- Tab Panels Container -->
+    <main class="panel-viewport">
+      <!-- 1. Instagram Settings Panel -->
+      <section class="view-panel active" id="panelInstagram" role="tabpanel" aria-labelledby="tabInstagram">
+        <div class="control-card">
+          <div class="control-row">
+            <div class="control-meta">
+              <span class="control-title">In-Video Live Scrubber</span>
+              <span class="control-description">Interactive timeline on Stories, Reels, & Feed</span>
+            </div>
+            <label class="switch-control" title="Toggle Instagram In-Video Scrubber">
+              <input type="checkbox" id="toggleScrubberIG" checked>
+              <span class="switch-track"><span class="switch-thumb"></span></span>
+            </label>
+          </div>
+
+          <div class="control-row sub-row" id="subRowIGStoriesOnly">
+            <div class="control-meta">
+              <span class="control-title">Stories Only Mode</span>
+              <span class="control-description">Constrain scrubber strictly to Instagram Stories</span>
+            </div>
+            <label class="switch-control" title="Constrain to Stories Only">
+              <input type="checkbox" id="toggleScrubberIGStoriesOnly">
+              <span class="switch-track"><span class="switch-thumb"></span></span>
+            </label>
+          </div>
+
+          <div class="control-row">
+            <div class="control-meta">
+              <span class="control-title">Auto-Unmute Stories</span>
+              <span class="control-description">Engage story audio automatically on view</span>
+            </div>
+            <label class="switch-control" title="Auto-Unmute Story Audio">
+              <input type="checkbox" id="toggleAutoUnmute">
+              <span class="switch-track"><span class="switch-thumb"></span></span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Instagram Integration Status Note -->
+        <div class="integration-card">
+          <div class="integration-header">
+            <div class="integration-title-wrap">
+              <svg class="integration-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+              </svg>
+              <span class="integration-name">Reels Speed Control</span>
+            </div>
+            <span class="badge-status badge-success">Integrated</span>
+          </div>
+          <p class="integration-body">
+            Directly above the Reels Heart action. Click to cycle playback speed; scroll mouse wheel to micro-adjust.
+          </p>
+        </div>
+      </section>
+
+      <!-- 2. Facebook Settings Panel -->
+      <section class="view-panel" id="panelFacebook" role="tabpanel" aria-labelledby="tabFacebook">
+        <div class="control-card">
+          <div class="control-row">
+            <div class="control-meta">
+              <span class="control-title">Stories Live Scrubber</span>
+              <span class="control-description">Interactive drag seekbar on Facebook Stories</span>
+            </div>
+            <label class="switch-control" title="Toggle Facebook Stories Scrubber">
+              <input type="checkbox" id="toggleScrubberFB" checked>
+              <span class="switch-track"><span class="switch-thumb"></span></span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Facebook Integration Status Note -->
+        <div class="integration-card">
+          <div class="integration-header">
+            <div class="integration-title-wrap">
+              <svg class="integration-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+                <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+              </svg>
+              <span class="integration-name">Story Vertical Volume</span>
+            </div>
+            <span class="badge-status badge-success">Integrated</span>
+          </div>
+          <p class="integration-body">
+            Sleek sound capsule on Facebook Stories. Hover or drag vertically to adjust volume; click speaker to mute.
+          </p>
+        </div>
+      </section>
+
+      <!-- 3. General Preferences & Floating Widget Panel -->
+      <section class="view-panel" id="panelGeneral" role="tabpanel" aria-labelledby="tabGeneral">
+        <!-- Floating HUD Section (Demoted from main identity to preference utility) -->
+        <div class="section-label">Floating Overlay (HUD)</div>
+        <div class="control-card">
+          <div class="control-row">
+            <div class="control-meta">
+              <span class="control-title">On-Screen Controller</span>
+              <span class="control-description">Movable floating mini-controller for playback</span>
+            </div>
+            <label class="switch-control" title="Toggle On-screen Movable Controller">
+              <input type="checkbox" id="toggleBadge" checked>
+              <span class="switch-track"><span class="switch-thumb"></span></span>
+            </label>
+          </div>
+
+          <div class="control-row">
+            <div class="control-meta">
+              <span class="control-title">Start Minimized</span>
+              <span class="control-description">Default to compact pill view on load</span>
+            </div>
+            <label class="switch-control" title="Start floating controller minimized">
+              <input type="checkbox" id="toggleMinimized">
+              <span class="switch-track"><span class="switch-thumb"></span></span>
+            </label>
+          </div>
+
+          <div class="control-row">
+            <div class="control-meta">
+              <span class="control-title">HUD Progress Timeline</span>
+              <span class="control-description">Show mini scrub track inside floating pill</span>
+            </div>
+            <label class="switch-control" title="Toggle HUD Timeline Scrubber">
+              <input type="checkbox" id="toggleFloatingTimeline" checked>
+              <span class="switch-track"><span class="switch-thumb"></span></span>
+            </label>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Footer Actions -->
+    <footer class="app-footer">
+      <button id="btnResetDefaults" class="footer-action-btn" type="button" title="Reset all extension preferences to defaults">
+        <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+          <path d="M3 3v5h5"/>
+        </svg>
+        <span>Reset Defaults</span>
+      </button>
+
+      <div class="footer-sep" aria-hidden="true"></div>
+
+      <button id="btnResetPos" class="footer-action-btn" type="button" title="Center on-screen floating HUD">
+        <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="22" y1="12" x2="18" y2="12"/>
+          <line x1="6" y1="12" x2="2" y2="12"/>
+          <line x1="12" y1="6" x2="12" y2="2"/>
+          <line x1="12" y1="22" x2="12" y2="18"/>
+        </svg>
+        <span>Reset Position</span>
+      </button>
+    </footer>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
